@@ -37,7 +37,7 @@ git push origin main
 
 **Environment Variables** (add in Railway dashboard):
 ```
-GEMINI_API_KEY=AIzaSyCUInx2BgrBAUjuAFAC8lVqZDsxsD2YYSM
+GEMINI_API_KEY=your_gemini_api_key_here
 NODE_ENV=production
 PORT=3001
 ```

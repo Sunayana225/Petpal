@@ -27,7 +27,7 @@ In your Railway project dashboard:
 1. **Go to Variables tab**
 2. **Add these environment variables**:
    ```
-   GEMINI_API_KEY = AIzaSyCUInx2BgrBAUjuAFAC8lVqZDsxsD2YYSM
+   GEMINI_API_KEY = your_gemini_api_key_here
    NODE_ENV = production
    PORT = 3001
    ```
