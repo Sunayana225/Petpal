@@ -1,0 +1,704 @@
+{
+  "dogs": {
+    "unsafe": [
+      {
+        "food": "chocolate",
+        "safety": "unsafe",
+        "description": "Chocolate contains theobromine and caffeine, which are toxic to dogs and can cause vomiting, diarrhea, seizures, and even death.",
+        "symptoms": ["vomiting", "diarrhea", "increased heart rate", "seizures", "hyperactivity", "tremors"],
+        "severity": "high",
+        "alternatives": ["carob treats", "dog-safe cookies"]
+      },
+      {
+        "food": "grapes",
+        "safety": "unsafe",
+        "description": "Grapes and raisins can cause kidney failure in dogs, even in small amounts.",
+        "symptoms": ["vomiting", "lethargy", "diarrhea", "abdominal pain", "decreased urination"],
+        "severity": "high",
+        "alternatives": ["blueberries", "apple slices (without seeds)", "watermelon"]
+      },
+      {
+        "food": "raisins",
+        "safety": "unsafe",
+        "description": "Raisins can cause kidney failure in dogs, even in small amounts.",
+        "symptoms": ["vomiting", "lethargy", "diarrhea", "abdominal pain", "decreased urination"],
+        "severity": "high",
+        "alternatives": ["blueberries", "apple slices (without seeds)", "watermelon"]
+      },
+      {
+        "food": "onions",
+        "safety": "unsafe",
+        "description": "Onions contain compounds that can damage red blood cells in dogs, leading to anemia.",
+        "symptoms": ["weakness", "vomiting", "breathing problems", "pale gums"],
+        "severity": "high",
+        "alternatives": ["carrots", "green beans", "sweet potato"]
+      },
+      {
+        "food": "garlic",
+        "safety": "unsafe",
+        "description": "Garlic is more toxic than onions and can cause anemia in dogs.",
+        "symptoms": ["weakness", "vomiting", "breathing problems", "pale gums"],
+        "severity": "high",
+        "alternatives": ["herbs like parsley (in small amounts)", "carrots"]
+      },
+      {
+        "food": "avocado",
+        "safety": "unsafe",
+        "description": "Avocados contain persin, which can cause vomiting and diarrhea in dogs.",
+        "symptoms": ["vomiting", "diarrhea", "difficulty breathing"],
+        "severity": "medium",
+        "alternatives": ["banana", "apple slices (without seeds)"]
+      },
+      {
+        "food": "xylitol",
+        "safety": "unsafe",
+        "description": "Xylitol (artificial sweetener) can cause rapid insulin release, leading to hypoglycemia and liver failure.",
+        "symptoms": ["vomiting", "loss of coordination", "lethargy", "collapse"],
+        "severity": "high",
+        "alternatives": ["natural dog treats", "fruits like banana"]
+      }
+    ],
+    "safe": [
+      {
+        "food": "carrots",
+        "safety": "safe",
+        "description": "Carrots are safe and healthy for dogs, providing vitamins and helping clean teeth.",
+        "benefits": ["good for teeth", "high in vitamin A", "low calorie"],
+        "preparation": "Raw or cooked, cut into appropriate sizes"
+      },
+      {
+        "food": "apples",
+        "safety": "safe",
+        "description": "Apples are safe for dogs when seeds and core are removed. High in vitamins A and C.",
+        "benefits": ["high in fiber", "vitamins A and C", "helps clean teeth"],
+        "preparation": "Remove seeds and core, cut into slices",
+        "caution": "Remove seeds as they contain cyanide"
+      },
+      {
+        "food": "blueberries",
+        "safety": "safe",
+        "description": "Blueberries are excellent for dogs, packed with antioxidants and vitamins.",
+        "benefits": ["antioxidants", "vitamin C", "fiber"],
+        "preparation": "Fresh or frozen, serve in moderation"
+      },
+      {
+        "food": "sweet potato",
+        "safety": "safe",
+        "description": "Sweet potatoes are nutritious and safe for dogs when cooked.",
+        "benefits": ["high in fiber", "vitamin A", "potassium"],
+        "preparation": "Cooked, never raw, no seasoning"
+      },
+      {
+        "food": "green beans",
+        "safety": "safe",
+        "description": "Green beans are safe and low-calorie for dogs.",
+        "benefits": ["low calorie", "fiber", "vitamins"],
+        "preparation": "Fresh, frozen, or canned (no salt), steamed or raw"
+      }
+    ],
+    "caution": [
+      {
+        "food": "cheese",
+        "safety": "caution",
+        "description": "Most dogs can eat cheese in small amounts, but some are lactose intolerant.",
+        "symptoms": ["diarrhea", "gas", "bloating"],
+        "severity": "low",
+        "recommendation": "Give in small amounts, watch for digestive issues"
+      },
+      {
+        "food": "bread",
+        "safety": "caution",
+        "description": "Plain bread is generally safe but offers no nutritional value and can cause weight gain.",
+        "recommendation": "Only plain bread, avoid with raisins, nuts, or seeds",
+        "caution": "High in carbs, can cause weight gain"
+      }
+    ]
+  },
+  "cats": {
+    "unsafe": [
+      {
+        "food": "chocolate",
+        "safety": "unsafe",
+        "description": "Chocolate is toxic to cats and can cause vomiting, diarrhea, seizures, and death.",
+        "symptoms": ["vomiting", "diarrhea", "increased heart rate", "seizures", "hyperactivity"],
+        "severity": "high",
+        "alternatives": ["cat-safe treats"]
+      },
+      {
+        "food": "onions",
+        "safety": "unsafe",
+        "description": "Onions can cause anemia in cats by damaging red blood cells.",
+        "symptoms": ["weakness", "vomiting", "breathing problems", "pale gums"],
+        "severity": "high",
+        "alternatives": ["cat grass", "small pieces of cooked chicken"]
+      },
+      {
+        "food": "garlic",
+        "safety": "unsafe",
+        "description": "Garlic is toxic to cats and can cause anemia.",
+        "symptoms": ["weakness", "vomiting", "breathing problems", "pale gums"],
+        "severity": "high",
+        "alternatives": ["cat grass", "small pieces of cooked chicken"]
+      },
+      {
+        "food": "grapes",
+        "safety": "unsafe",
+        "description": "Grapes can cause kidney problems in cats.",
+        "symptoms": ["vomiting", "lethargy", "decreased appetite"],
+        "severity": "high",
+        "alternatives": ["small pieces of cantaloupe", "cat grass"]
+      },
+      {
+        "food": "raisins",
+        "safety": "unsafe",
+        "description": "Raisins can cause kidney problems in cats.",
+        "symptoms": ["vomiting", "lethargy", "decreased appetite"],
+        "severity": "high",
+        "alternatives": ["small pieces of cantaloupe", "cat grass"]
+      }
+    ],
+    "safe": [
+      {
+        "food": "cooked chicken",
+        "safety": "safe",
+        "description": "Plain cooked chicken is safe and healthy for cats.",
+        "benefits": ["high protein", "lean meat"],
+        "preparation": "Cooked, no seasoning, remove bones"
+      },
+      {
+        "food": "cooked fish",
+        "safety": "safe",
+        "description": "Cooked fish is safe for cats and provides omega-3 fatty acids.",
+        "benefits": ["omega-3 fatty acids", "protein"],
+        "preparation": "Cooked, remove all bones, no seasoning"
+      },
+      {
+        "food": "cantaloupe",
+        "safety": "safe",
+        "description": "Small amounts of cantaloupe are safe for cats.",
+        "benefits": ["vitamins A and C", "hydration"],
+        "preparation": "Small pieces, remove seeds and rind"
+      }
+    ],
+    "caution": [
+      {
+        "food": "milk",
+        "safety": "caution",
+        "description": "Many adult cats are lactose intolerant and may experience digestive issues.",
+        "symptoms": ["diarrhea", "gas", "stomach upset"],
+        "severity": "low",
+        "recommendation": "Avoid or give lactose-free alternatives"
+      },
+      {
+        "food": "tuna",
+        "safety": "caution",
+        "description": "Tuna is safe occasionally but shouldn't be a regular diet due to mercury content.",
+        "recommendation": "Occasional treat only, not as regular food",
+        "caution": "High mercury content, can cause mercury poisoning if fed regularly"
+      }
+    ]
+  },
+  "rabbits": {
+    "unsafe": [
+      {
+        "food": "chocolate",
+        "safety": "unsafe",
+        "description": "Chocolate is toxic to rabbits and can cause digestive issues and potentially death.",
+        "symptoms": ["diarrhea", "lethargy", "loss of appetite", "difficulty breathing"],
+        "severity": "high",
+        "alternatives": ["hay", "leafy greens", "rabbit pellets"]
+      },
+      {
+        "food": "iceberg lettuce",
+        "safety": "unsafe",
+        "description": "Iceberg lettuce can cause diarrhea and has little nutritional value for rabbits.",
+        "symptoms": ["diarrhea", "digestive upset"],
+        "severity": "medium",
+        "alternatives": ["romaine lettuce", "kale", "spinach"]
+      },
+      {
+        "food": "onions",
+        "safety": "unsafe",
+        "description": "Onions can cause anemia and digestive problems in rabbits.",
+        "symptoms": ["weakness", "pale gums", "difficulty breathing"],
+        "severity": "high",
+        "alternatives": ["carrots", "bell peppers", "herbs"]
+      },
+      {
+        "food": "garlic",
+        "safety": "unsafe",
+        "description": "Garlic is toxic to rabbits and can cause anemia.",
+        "symptoms": ["weakness", "pale gums", "difficulty breathing"],
+        "severity": "high",
+        "alternatives": ["herbs like parsley", "cilantro"]
+      },
+      {
+        "food": "avocado",
+        "safety": "unsafe",
+        "description": "Avocado contains persin which is toxic to rabbits.",
+        "symptoms": ["difficulty breathing", "fluid around heart", "death"],
+        "severity": "high",
+        "alternatives": ["apple slices", "banana"]
+      }
+    ],
+    "safe": [
+      {
+        "food": "hay",
+        "safety": "safe",
+        "description": "Timothy hay is essential for rabbit digestion and dental health.",
+        "benefits": ["fiber", "dental health", "digestive health"],
+        "preparation": "Fresh, dry hay available at all times"
+      },
+      {
+        "food": "carrots",
+        "safety": "safe",
+        "description": "Carrots are safe for rabbits but should be given in moderation due to sugar content.",
+        "benefits": ["vitamin A", "fiber"],
+        "preparation": "Small pieces, 1-2 times per week as treats"
+      },
+      {
+        "food": "romaine lettuce",
+        "safety": "safe",
+        "description": "Romaine lettuce is safe and nutritious for rabbits.",
+        "benefits": ["vitamins", "hydration", "fiber"],
+        "preparation": "Fresh, washed leaves"
+      },
+      {
+        "food": "bell peppers",
+        "safety": "safe",
+        "description": "Bell peppers are safe and provide vitamin C for rabbits.",
+        "benefits": ["vitamin C", "antioxidants"],
+        "preparation": "Remove seeds, small pieces"
+      },
+      {
+        "food": "grass",
+        "safety": "safe",
+        "description": "Fresh grass is safe and natural for rabbits, providing fiber and nutrients.",
+        "benefits": ["fiber", "natural foraging", "digestive health"],
+        "preparation": "Fresh, pesticide-free grass from safe areas"
+      }
+    ],
+    "caution": [
+      {
+        "food": "fruits",
+        "safety": "caution",
+        "description": "Most fruits are safe but high in sugar and should be limited.",
+        "recommendation": "Small amounts 1-2 times per week",
+        "caution": "Too much fruit can cause digestive upset and obesity"
+      }
+    ]
+  },
+  "hamsters": {
+    "unsafe": [
+      {
+        "food": "chocolate",
+        "safety": "unsafe",
+        "description": "Chocolate is extremely toxic to hamsters and can be fatal.",
+        "symptoms": ["seizures", "difficulty breathing", "death"],
+        "severity": "high",
+        "alternatives": ["sunflower seeds", "pumpkin seeds"]
+      },
+      {
+        "food": "onions",
+        "safety": "unsafe",
+        "description": "Onions can cause anemia in hamsters.",
+        "symptoms": ["weakness", "pale gums", "lethargy"],
+        "severity": "high",
+        "alternatives": ["small pieces of carrot", "cucumber"]
+      },
+      {
+        "food": "garlic",
+        "safety": "unsafe",
+        "description": "Garlic is toxic to hamsters and can cause blood disorders.",
+        "symptoms": ["weakness", "pale gums", "difficulty breathing"],
+        "severity": "high",
+        "alternatives": ["herbs in small amounts"]
+      },
+      {
+        "food": "citrus fruits",
+        "safety": "unsafe",
+        "description": "Citrus fruits are too acidic for hamsters and can cause digestive issues.",
+        "symptoms": ["diarrhea", "stomach upset"],
+        "severity": "medium",
+        "alternatives": ["apple pieces", "berries"]
+      }
+    ],
+    "safe": [
+      {
+        "food": "sunflower seeds",
+        "safety": "safe",
+        "description": "Sunflower seeds are safe for hamsters but should be given in moderation.",
+        "benefits": ["healthy fats", "protein"],
+        "preparation": "Unsalted, small amounts as treats"
+      },
+      {
+        "food": "carrots",
+        "safety": "safe",
+        "description": "Carrots are safe and nutritious for hamsters.",
+        "benefits": ["vitamin A", "fiber"],
+        "preparation": "Small pieces, remove if not eaten within 24 hours"
+      },
+      {
+        "food": "broccoli",
+        "safety": "safe",
+        "description": "Broccoli is safe for hamsters in small amounts.",
+        "benefits": ["vitamins", "fiber"],
+        "preparation": "Small florets, fresh"
+      }
+    ],
+    "caution": [
+      {
+        "food": "nuts",
+        "safety": "caution",
+        "description": "Some nuts are safe but high in fat and should be limited.",
+        "recommendation": "Very small amounts, avoid salted nuts",
+        "caution": "High fat content can cause obesity"
+      }
+    ]
+  },
+  "birds": {
+    "unsafe": [
+      {
+        "food": "avocado",
+        "safety": "unsafe",
+        "description": "Avocado is extremely toxic to birds and can cause sudden death.",
+        "symptoms": ["difficulty breathing", "weakness", "sudden death"],
+        "severity": "high",
+        "alternatives": ["apple slices", "berries", "leafy greens"]
+      },
+      {
+        "food": "chocolate",
+        "safety": "unsafe",
+        "description": "Chocolate is toxic to birds and can cause seizures and death.",
+        "symptoms": ["vomiting", "diarrhea", "seizures", "death"],
+        "severity": "high",
+        "alternatives": ["bird-safe treats", "millet"]
+      },
+      {
+        "food": "caffeine",
+        "safety": "unsafe",
+        "description": "Caffeine can cause cardiac arrest in birds.",
+        "symptoms": ["hyperactivity", "increased heart rate", "cardiac arrest"],
+        "severity": "high",
+        "alternatives": ["fresh water", "herbal teas (cooled)"]
+      },
+      {
+        "food": "salt",
+        "safety": "unsafe",
+        "description": "Salt can cause dehydration and kidney damage in birds.",
+        "symptoms": ["excessive thirst", "kidney damage", "death"],
+        "severity": "high",
+        "alternatives": ["fresh fruits", "vegetables"]
+      }
+    ],
+    "safe": [
+      {
+        "food": "millet",
+        "safety": "safe",
+        "description": "Millet is a favorite treat for many birds and is very safe.",
+        "benefits": ["energy", "entertainment"],
+        "preparation": "Spray millet or loose seeds"
+      },
+      {
+        "food": "leafy greens",
+        "safety": "safe",
+        "description": "Dark leafy greens are excellent for birds.",
+        "benefits": ["vitamins", "minerals", "fiber"],
+        "preparation": "Fresh, washed, chopped appropriately"
+      },
+      {
+        "food": "berries",
+        "safety": "safe",
+        "description": "Most berries are safe and nutritious for birds.",
+        "benefits": ["antioxidants", "vitamins"],
+        "preparation": "Fresh or frozen, thawed"
+      }
+    ],
+    "caution": [
+      {
+        "food": "fruit pits",
+        "safety": "caution",
+        "description": "Fruit pits and seeds can contain cyanide.",
+        "recommendation": "Remove all pits and seeds before offering fruit",
+        "caution": "Apple seeds, cherry pits, etc. are toxic"
+      }
+    ]
+  },
+  "turtles": {
+    "unsafe": [
+      {
+        "food": "dairy",
+        "safety": "unsafe",
+        "description": "Turtles cannot digest dairy products and it can cause serious digestive issues.",
+        "symptoms": ["diarrhea", "digestive blockage", "illness"],
+        "severity": "high",
+        "alternatives": ["leafy greens", "aquatic plants"]
+      },
+      {
+        "food": "processed foods",
+        "safety": "unsafe",
+        "description": "Processed foods contain preservatives and chemicals harmful to turtles.",
+        "symptoms": ["digestive issues", "malnutrition", "illness"],
+        "severity": "medium",
+        "alternatives": ["commercial turtle food", "fresh vegetables"]
+      },
+      {
+        "food": "bread",
+        "safety": "unsafe",
+        "description": "Bread has no nutritional value and can cause digestive problems.",
+        "symptoms": ["malnutrition", "digestive issues"],
+        "severity": "medium",
+        "alternatives": ["commercial turtle pellets", "leafy greens"]
+      }
+    ],
+    "safe": [
+      {
+        "food": "leafy greens",
+        "safety": "safe",
+        "description": "Dark leafy greens are essential for turtle nutrition.",
+        "benefits": ["vitamins", "minerals", "fiber"],
+        "preparation": "Fresh, washed, appropriate size pieces"
+      },
+      {
+        "food": "commercial turtle food",
+        "safety": "safe",
+        "description": "High-quality commercial turtle food provides balanced nutrition.",
+        "benefits": ["complete nutrition", "proper calcium/phosphorus ratio"],
+        "preparation": "Follow package instructions for amount and frequency"
+      }
+    ],
+    "caution": [
+      {
+        "food": "fish",
+        "safety": "caution",
+        "description": "Some fish are safe but should be part of a balanced diet.",
+        "recommendation": "Offer variety, avoid fish as sole food source",
+        "caution": "Some fish can cause thiamine deficiency if fed exclusively"
+      }
+    ]
+  },
+  "fish": {
+    "unsafe": [
+      {
+        "food": "chocolate",
+        "safety": "unsafe",
+        "description": "Chocolate is toxic to fish and can contaminate water, causing serious health issues.",
+        "symptoms": ["lethargy", "loss of appetite", "water contamination", "death"],
+        "severity": "high",
+        "alternatives": ["commercial fish food", "bloodworms", "fish flakes"]
+      },
+      {
+        "food": "bread",
+        "safety": "unsafe",
+        "description": "Bread can cause digestive problems and water quality issues.",
+        "symptoms": ["digestive blockage", "poor water quality", "malnutrition"],
+        "severity": "medium",
+        "alternatives": ["commercial fish food", "bloodworms"]
+      },
+      {
+        "food": "rice",
+        "safety": "unsafe",
+        "description": "Rice can expand in fish stomachs and cause digestive issues.",
+        "symptoms": ["digestive blockage", "swimming problems"],
+        "severity": "medium",
+        "alternatives": ["fish flakes", "pellets"]
+      },
+      {
+        "food": "dairy",
+        "safety": "unsafe",
+        "description": "Dairy products can pollute water and cause digestive issues in fish.",
+        "symptoms": ["water contamination", "digestive problems", "illness"],
+        "severity": "medium",
+        "alternatives": ["commercial fish food", "aquatic plants"]
+      }
+    ],
+    "safe": [
+      {
+        "food": "commercial fish food",
+        "safety": "safe",
+        "description": "High-quality commercial fish food is formulated for optimal fish health.",
+        "benefits": ["balanced nutrition", "proper protein levels"],
+        "preparation": "Feed appropriate amount 1-2 times daily"
+      },
+      {
+        "food": "bloodworms",
+        "safety": "safe",
+        "description": "Bloodworms are a natural food source for many fish species.",
+        "benefits": ["protein", "natural diet"],
+        "preparation": "Live, frozen, or freeze-dried"
+      },
+      {
+        "food": "brine shrimp",
+        "safety": "safe",
+        "description": "Brine shrimp are excellent live or frozen food for fish.",
+        "benefits": ["high protein", "easy to digest", "natural food"],
+        "preparation": "Feed live, frozen, or freeze-dried brine shrimp"
+      },
+      {
+        "food": "daphnia",
+        "safety": "safe",
+        "description": "Daphnia are small crustaceans that make excellent fish food.",
+        "benefits": ["natural food source", "good for digestion"],
+        "preparation": "Feed live or frozen daphnia as treats"
+      },
+      {
+        "food": "fish flakes",
+        "safety": "safe",
+        "description": "Commercial fish flakes are formulated for balanced nutrition.",
+        "benefits": ["balanced nutrition", "convenient", "long shelf life"],
+        "preparation": "Feed according to package instructions, avoid overfeeding"
+      }
+    ],
+    "caution": [
+      {
+        "food": "human food",
+        "safety": "caution",
+        "description": "Most human foods are not suitable for fish.",
+        "recommendation": "Stick to fish-specific foods",
+        "caution": "Human food can pollute water and harm fish"
+      }
+    ]
+  },
+  "lizards": {
+    "unsafe": [
+      {
+        "food": "fruits",
+        "safety": "unsafe",
+        "description": "Most lizards are insectivores and cannot properly digest fruits.",
+        "symptoms": ["digestive upset", "malnutrition", "diarrhea"],
+        "severity": "medium",
+        "alternatives": ["crickets", "mealworms", "commercial lizard food"]
+      },
+      {
+        "food": "dairy",
+        "safety": "unsafe",
+        "description": "Lizards cannot digest dairy products.",
+        "symptoms": ["severe digestive issues", "diarrhea"],
+        "severity": "high",
+        "alternatives": ["insects", "commercial reptile food"]
+      }
+    ],
+    "safe": [
+      {
+        "food": "crickets",
+        "safety": "safe",
+        "description": "Crickets are an excellent protein source for most lizards.",
+        "benefits": ["protein", "natural diet", "mental stimulation"],
+        "preparation": "Live or pre-killed, gut-loaded crickets"
+      },
+      {
+        "food": "mealworms",
+        "safety": "safe",
+        "description": "Mealworms are a good protein source for many lizard species.",
+        "benefits": ["protein", "fat"],
+        "preparation": "Live or dried, in moderation"
+      }
+    ],
+    "caution": [
+      {
+        "food": "vegetables",
+        "safety": "caution",
+        "description": "Some lizards can eat vegetables, but it depends on the species.",
+        "recommendation": "Research your specific lizard species dietary needs",
+        "caution": "Carnivorous lizards cannot digest plant matter"
+      }
+    ]
+  },
+  "snakes": {
+    "unsafe": [
+      {
+        "food": "human food",
+        "safety": "unsafe",
+        "description": "Snakes are strict carnivores and should only eat whole prey items.",
+        "symptoms": ["digestive issues", "malnutrition", "illness"],
+        "severity": "high",
+        "alternatives": ["mice", "rats", "appropriate prey items"]
+      }
+    ],
+    "safe": [
+      {
+        "food": "mice",
+        "safety": "safe",
+        "description": "Mice are the primary food source for most pet snakes.",
+        "benefits": ["complete nutrition", "natural diet"],
+        "preparation": "Pre-killed frozen/thawed, appropriate size"
+      },
+      {
+        "food": "rats",
+        "safety": "safe",
+        "description": "Rats are suitable for larger snake species.",
+        "benefits": ["complete nutrition", "appropriate for larger snakes"],
+        "preparation": "Pre-killed frozen/thawed, appropriate size"
+      }
+    ],
+    "caution": [
+      {
+        "food": "live prey",
+        "safety": "caution",
+        "description": "Live prey can injure snakes and is generally unnecessary.",
+        "recommendation": "Use pre-killed frozen/thawed prey",
+        "caution": "Live prey can bite and injure your snake"
+      }
+    ]
+  },
+  "chickens": {
+    "unsafe": [
+      {
+        "food": "chocolate",
+        "safety": "unsafe",
+        "description": "Chocolate is toxic to chickens and can cause death.",
+        "symptoms": ["diarrhea", "vomiting", "seizures", "death"],
+        "severity": "high",
+        "alternatives": ["grains", "vegetables", "chicken feed"]
+      },
+      {
+        "food": "avocado",
+        "safety": "unsafe",
+        "description": "Avocado is toxic to chickens and can cause sudden death.",
+        "symptoms": ["difficulty breathing", "weakness", "sudden death"],
+        "severity": "high",
+        "alternatives": ["leafy greens", "vegetables"]
+      },
+      {
+        "food": "onions",
+        "safety": "unsafe",
+        "description": "Onions can cause anemia in chickens.",
+        "symptoms": ["weakness", "pale comb", "difficulty breathing"],
+        "severity": "high",
+        "alternatives": ["vegetables", "grains"]
+      }
+    ],
+    "safe": [
+      {
+        "food": "grains",
+        "safety": "safe",
+        "description": "Grains like corn and wheat are excellent for chickens.",
+        "benefits": ["energy", "carbohydrates"],
+        "preparation": "Whole grains, cracked corn"
+      },
+      {
+        "food": "leafy greens",
+        "safety": "safe",
+        "description": "Leafy greens provide vitamins and minerals for chickens.",
+        "benefits": ["vitamins", "minerals", "fiber"],
+        "preparation": "Fresh, chopped if needed"
+      },
+      {
+        "food": "vegetables",
+        "safety": "safe",
+        "description": "Most vegetables are safe and nutritious for chickens.",
+        "benefits": ["vitamins", "minerals", "variety"],
+        "preparation": "Fresh, chopped appropriately"
+      }
+    ],
+    "caution": [
+      {
+        "food": "treats",
+        "safety": "caution",
+        "description": "Treats should not exceed 10% of a chicken's diet.",
+        "recommendation": "Limit treats to maintain balanced nutrition",
+        "caution": "Too many treats can cause nutritional imbalances"
+      }
+    ]
+  }
+}
