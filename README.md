@@ -1,14 +1,14 @@
 # 🐾 PetPal - Comprehensive Pet Food Safety Platform
 
 <!--
-SEO Keywords: pet food safety, veterinary database, pet nutrition, food toxicity, animal health, pet care, dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes, AI-powered, multi-pet support, cross-platform, real-time analysis
+SEO Keywords: pet food safety, veterinary database, pet nutrition, food toxicity, animal health, pet care, dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes, AI-powered, multi-pet support, cross-platform, real-time analysis, gemini-ai
 -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
 [![Express](https://img.shields.io/badge/Express-4.18+-000000.svg)](https://expressjs.com/)
-[![AI Powered](https://img.shields.io/badge/AI-Gemini%20%2B%20OpenAI-orange.svg)](https://ai.google.dev/)
+[![AI Powered](https://img.shields.io/badge/AI-Gemini%20AI-orange.svg)](https://ai.google.dev/)
 
 PetPal is an intelligent, AI-powered platform that helps pet owners make informed decisions about food safety across 9 different pet species. Using veterinary databases and AI technology, PetPal provides instant safety assessments for foods including dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, and snakes.
 
@@ -16,7 +16,7 @@ PetPal is an intelligent, AI-powered platform that helps pet owners make informe
 
 When you input a food item, PetPal:
 1. **🔍 Searches** our comprehensive veterinary database (sourced from ManyPets and ASPCA)
-2. **🤖 Analyzes** using AI models (Gemini/OpenAI) for unknown foods
+2. **🤖 Analyzes** using Google Gemini AI for unknown foods
 3. **⚡ Returns** instant safety results with detailed explanations
 4. **📚 Provides** recommendations and severity levels for each pet type
 
@@ -104,7 +104,7 @@ petpal-web/             # React web application
 - **Multi-Species Support**: Safety data for 9 different animal types
 - **Instant Analysis**: Real-time food safety checking with immediate results
 - **Veterinary Database**: 570+ foods with professional safety data
-- **AI Fallback**: Intelligent analysis for unknown foods using Gemini/OpenAI
+- **AI Fallback**: Intelligent analysis for unknown foods using Google Gemini AI
 - **Severity Classification**: Clear risk categorization (Safe/Caution/Unsafe)
 - **Cross-Platform**: Web app, mobile app, and comprehensive API access
 
@@ -112,7 +112,7 @@ petpal-web/             # React web application
 ```
 User Input → Database Lookup → AI Analysis → Safety Result
     ↓              ↓              ↓            ↓
-"chocolate"  → ManyPets DB  → Gemini API  → "❌ UNSAFE"
+"chocolate"  → ManyPets DB  → Gemini AI  → "❌ UNSAFE"
 "carrot"     → Found match  → Skip AI     → "✅ SAFE"
 "newberry"   → Not found   → AI analysis → "⚠️ CAUTION"
 ```
@@ -215,7 +215,9 @@ NODE_ENV=development
 
 # AI API Keys (optional - app works without these)
 GEMINI_API_KEY=your_gemini_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
+
+# Future AI Integration (not yet implemented)
+# OPENAI_API_KEY=your_openai_api_key_here
 
 # Database Configuration (future expansion)
 # DATABASE_URL=your_database_url_here
@@ -381,7 +383,6 @@ GET /api/food-safety/pets
 - **ManyPets Database**: 570+ veterinary-verified food entries
 - **ASPCA Guidelines**: Additional safety references
 - **Google Gemini AI**: Intelligent analysis for unknown foods
-- **OpenAI Integration**: Alternative AI provider for redundancy
 - **Real-time Processing**: Instant database lookups with AI fallback
 
 ### Architecture Flow
@@ -393,7 +394,7 @@ GET /api/food-safety/pets
                                                         │
                                                         ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   AI Response   │◀───│  Gemini/OpenAI  │◀───│  ManyPets DB    │
+│   AI Response   │◀───│   Gemini AI     │◀───│  ManyPets DB    │
 │   (Fallback)    │    │   (Optional)    │    │  (Primary)      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
@@ -483,7 +484,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### 🤖 **AI Technology Partners**
 - **Google Gemini**: Advanced language model for unknown food analysis
-- **OpenAI**: Alternative AI analysis for comprehensive coverage
 - **Veterinary AI Research**: Ongoing collaboration for accuracy improvements
 
 ### 🛠️ **Open Source Community**
