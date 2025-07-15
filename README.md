@@ -71,7 +71,7 @@ PetPal provides specialized safety data for **9 different pet types**:
 ### Example API Request/Response:
 ```bash
 # Check if chocolate is safe for dogs
-curl -X POST http://localhost:3000/api/food-safety/check \
+curl -X POST https://petpalapi.onrender.com/api/food-safety/check \
   -H "Content-Type: application/json" \
   -d '{"pet": "dog", "food": "chocolate"}'
 ```
@@ -104,7 +104,6 @@ curl -X POST http://localhost:3000/api/food-safety/check \
   }
 }
 ```
-
 ```
 petpal-backend/          # Express.js API server
 ├── src/                 # Source code
@@ -190,8 +189,12 @@ cp .env.example .env
 
 # Start development server
 npm run dev
-# Server runs on http://localhost:3000
+# Server runs on http://localhost:3001
 ```
+
+**Connect to Production API:**
+If you want to test against the live API instead of running locally, your frontend can connect directly to:
+- **Production API**: `https://petpalapi.onrender.com/api`
 
 ### 2️⃣ **Web App Setup** (Frontend)
 ```bash
@@ -221,11 +224,19 @@ npx expo start
 
 ### 4️⃣ **Test the API** (Verification)
 ```bash
-# Test if backend is running
-curl http://localhost:3000/api/health
+# Test if backend is running (Production)
+curl https://petpalapi.onrender.com/
 
-# Test food safety check
-curl -X POST http://localhost:3000/api/food-safety/check \
+# Test local development backend
+curl http://localhost:3001/api/health
+
+# Test food safety check (Production)
+curl -X POST https://petpalapi.onrender.com/api/food-safety/check \
+  -H "Content-Type: application/json" \
+  -d '{"pet": "dog", "food": "apple"}'
+
+# Test food safety check (Local)
+curl -X POST http://localhost:3001/api/food-safety/check \
   -H "Content-Type: application/json" \
   -d '{"pet": "dog", "food": "apple"}'
 ```
@@ -235,7 +246,7 @@ curl -X POST http://localhost:3000/api/food-safety/check \
 ### Backend (.env) - Complete Setup
 ```bash
 # Required for production deployment
-PORT=3000
+PORT=3001
 NODE_ENV=development
 
 # AI API Keys (optional - app works without these)
@@ -257,8 +268,57 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 ### Frontend
-No environment variables required for basic functionality. The web app connects to the backend API automatically.
+No environment variables required for basic functionality. Update your API service to point to production:
 
+**For Web App (petpal-web/src/services/api.ts):**
+```typescript
+const API_BASE_URL = 'https://petpalapi.onrender.com/api';
+```
+
+**For Mobile App (PetPalMobile/services/api.ts):**
+```typescript
+const API_BASE_URL = 'https://petpalapi.onrender.com/api';
+```
+
+### 🔄 **Connecting Frontend to Production API**
+
+#### Update Web App Configuration
+1. **Navigate to**: `petpal-web/src/services/api.ts`
+2. **Update the base URL**:
+   ```typescript
+   // Change from localhost to production
+   const API_BASE_URL = 'https://petpalapi.onrender.com/api';
+   ```
+
+#### Update Mobile App Configuration
+1. **Navigate to**: `petpal-backend/PetPalMobile/services/api.ts`
+2. **Update the API URL**:
+   ```typescript
+   // Production API URL
+   const API_BASE_URL = 'https://petpalapi.onrender.com/api';
+   ```
+3. **Test with Expo**: Your mobile app will now use the live API
+
+#### Environment-Based Configuration (Recommended)
+Create environment-specific configurations:
+
+**Web App (.env.production):**
+```bash
+REACT_APP_API_URL=https://petpalapi.onrender.com/api
+```
+
+**Mobile App (app.config.js):**
+```javascript
+export default {
+  expo: {
+    extra: {
+      apiUrl: process.env.NODE_ENV === 'production' 
+        ? 'https://petpalapi.onrender.com/api'
+        : 'http://localhost:3001/api'
+    }
+  }
+};
+```
 ### AI Features Configuration
 The app works perfectly **without AI API keys** using the built-in veterinary database. AI is only used as an intelligent fallback for unknown foods:
 
@@ -269,6 +329,10 @@ The app works perfectly **without AI API keys** using the built-in veterinary da
 ## 📱 Deployment
 
 ### Backend Deployment
+- **Render**: Currently deployed at `https://petpalapi.onrender.com/`
+  - **Live API**: Production-ready with automatic deployments
+  - **Free tier**: Suitable for development and testing
+  - **Zero-config**: Automatic builds from Git repository
 - **Railway**: One-click deployment with `railway.json`
 - **Vercel**: Serverless deployment with `vercel.json`
 - **Traditional hosting**: PM2, Docker, or standard Node.js hosting
@@ -281,6 +345,13 @@ The app works perfectly **without AI API keys** using the built-in veterinary da
 ### Mobile App Deployment
 - **Expo Application Services (EAS)**: Build and submit to app stores
 - **Manual build**: Use Expo CLI to build standalone apps
+
+### Production API Configuration
+The API is currently deployed on Render with the following configuration:
+- **Base URL**: `https://petpalapi.onrender.com/api`
+- **Health Check**: `https://petpalapi.onrender.com/`
+- **Environment**: Production with rate limiting and security headers
+- **Features**: Full food safety database + AI fallback
 
 ## 🧪 Testing & Quality Assurance
 
@@ -313,18 +384,31 @@ npm run test:coverage      # Generate coverage report
 ## 📖 Complete API Documentation
 
 ### Base URL
-- **Local Development**: `http://localhost:3000/api`
-- **Production**: `https://your-domain.com/api`
+- **Local Development**: `http://localhost:3001/api`
+- **Production**: `https://petpalapi.onrender.com/api`
 
 ### Endpoints Overview
 
 #### 🏥 Health & Status
 ```bash
+# Root endpoint - Welcome message
+GET /
+# Returns: Welcome message
+
+# Health check endpoint
 GET /api/health
 # Returns: Server status and uptime
 
+# API information endpoint
 GET /api/info  
 # Returns: API version, supported pets, and endpoint list
+
+# System monitoring
+GET /api/monitoring/status
+# Returns: System performance metrics
+
+GET /api/monitoring/metrics
+# Returns: Request metrics and analytics
 ```
 
 #### 🔍 Food Safety Checks
@@ -335,7 +419,7 @@ Content-Type: application/json
 # Request Body:
 {
   "food": "chocolate",
-  "petType": "dog"
+  "pet": "dog"
 }
 
 # Response:
@@ -348,7 +432,9 @@ Content-Type: application/json
     "severity": "high",
     "source": "ManyPets Veterinary Database",
     "recommendation": "Contact veterinarian immediately"
-  }
+  },
+  "requestId": "1703389256-abc123",
+  "processingTime": "45ms"
 }
 ```
 
@@ -364,12 +450,6 @@ GET /api/food-safety/pets
 # Returns: List of all supported pet types
 ```
 
-### Response Codes
-- **200**: Success
-- **400**: Bad request (missing parameters)
-- **404**: Resource not found
-- **500**: Server error
-
 ### Error Response Format
 ```json
 {
@@ -379,7 +459,47 @@ GET /api/food-safety/pets
 }
 ```
 
-## 🛠️ Technology Stack & Architecture
+### 🧪 **Testing Your Deployed API**
+
+Test these endpoints with the live production API:
+
+```bash
+# 1. Welcome message (Root endpoint)
+curl https://petpalapi.onrender.com/
+
+# 2. Health check
+curl https://petpalapi.onrender.com/api/health
+
+# 3. API information
+curl https://petpalapi.onrender.com/api/info
+
+# 4. Food safety check - Safe food
+curl -X POST https://petpalapi.onrender.com/api/food-safety/check \
+  -H "Content-Type: application/json" \
+  -d '{"pet": "dog", "food": "apple"}'
+
+# 5. Food safety check - Unsafe food
+curl -X POST https://petpalapi.onrender.com/api/food-safety/check \
+  -H "Content-Type: application/json" \
+  -d '{"pet": "dog", "food": "chocolate"}'
+
+# 6. Get supported pets
+curl https://petpalapi.onrender.com/api/food-safety/pets
+
+# 7. Get safe foods for dogs
+curl https://petpalapi.onrender.com/api/food-safety/safe/dog
+
+# 8. Get unsafe foods for cats
+curl https://petpalapi.onrender.com/api/food-safety/unsafe/cat
+
+# 9. System monitoring
+curl https://petpalapi.onrender.com/api/monitoring/status
+
+# 10. Request metrics
+curl https://petpalapi.onrender.com/api/monitoring/metrics
+```
+
+## 🔧 Technology Stack & Architecture
 
 ### Backend Technology
 - **Node.js** - Runtime environment
@@ -389,6 +509,7 @@ GET /api/food-safety/pets
 - **Morgan** - HTTP request logging middleware
 - **CORS** - Cross-origin resource sharing
 - **Helmet** - Security middleware
+- **Render** - Production deployment platform (current hosting)
 
 ### Frontend Technology
 - **React** - Modern UI library with hooks
@@ -414,10 +535,10 @@ GET /api/food-safety/pets
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Web/Mobile    │───▶│   Express API   │───▶│   Food Safety   │
-│     Frontend    │    │    (Node.js)    │    │    Service      │
+│     Frontend    │    │ (Render Deploy) │    │    Service      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                        │
-                                                        ▼
+                          petpalapi.onrender.com          │
+                                                          ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   AI Response   │◀───│   Gemini AI     │◀───│  ManyPets DB    │
 │   (Fallback)    │    │   (Optional)    │    │  (Primary)      │
@@ -427,8 +548,9 @@ GET /api/food-safety/pets
 ## 🎯 **Live Demo & Screenshots**
 
 ### 🌐 **Try It Live**
+- **API Deployment**: [https://petpalapi.onrender.com/](https://petpalapi.onrender.com/)
+- **API Base URL**: `https://petpalapi.onrender.com/api`
 - **Web App**: [Coming Soon - Deploy to Vercel]
-- **API Playground**: `https://your-api-domain.com/api/info`
 - **Mobile App**: Available via Expo Go (scan QR code after running locally)
 
 ### 📸 **Example Usage**
@@ -446,7 +568,8 @@ GET /api/food-safety/pets
 
 **API Response Demo:**
 ```bash
-curl -X POST localhost:3000/api/food-safety/check \
+curl -X POST https://petpalapi.onrender.com/api/food-safety/check \
+  -H "Content-Type: application/json" \
   -d '{"pet":"cat","food":"tuna"}'
 
 # Response:
@@ -458,6 +581,45 @@ curl -X POST localhost:3000/api/food-safety/check \
   }
 }
 ```
+
+## 🚀 **Live Production API**
+
+### 🌟 **Current Deployment Status**
+Your PetPal API is **live and running** at:
+- **🔗 Production URL**: [https://petpalapi.onrender.com/](https://petpalapi.onrender.com/)
+- **⚡ API Base**: `https://petpalapi.onrender.com/api`
+- **🏥 Health Check**: Available at root URL
+- **📊 Status**: Active and responding
+- **🔄 Auto-deploys**: From your GitHub repository
+
+### 🎯 **Quick API Test**
+Try these live endpoints right now:
+
+**Welcome Message:**
+```bash
+curl https://petpalapi.onrender.com/
+```
+
+**Food Safety Check:**
+```bash
+curl -X POST https://petpalapi.onrender.com/api/food-safety/check \
+  -H "Content-Type: application/json" \
+  -d '{"pet": "dog", "food": "carrot"}'
+```
+
+**Get Supported Pets:**
+```bash
+curl https://petpalapi.onrender.com/api/food-safety/pets
+```
+
+### 🔧 **API Features Available**
+✅ **570+ Food Database**: Comprehensive veterinary data  
+✅ **9 Pet Types**: Dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes  
+✅ **AI Fallback**: Google Gemini for unknown foods  
+✅ **Rate Limiting**: Production-ready security  
+✅ **Request Tracking**: Built-in monitoring and metrics  
+✅ **Error Handling**: Comprehensive validation and responses  
+✅ **CORS Enabled**: Ready for web and mobile frontends
 
 ## 🤝 Contributing & Development
 
@@ -556,3 +718,39 @@ This project is licensed under the [MIT License](LICENSE).
 **Made with ❤️ for pet lovers everywhere!** 🐕🐱🐰🐹🐦🐢🐠🦎🐍
 
 *Last updated: July 16, 2025*
+
+### 🔧 **API Troubleshooting**
+
+#### Common Issues & Solutions
+
+**🚨 "Cannot GET /api/health"**
+- API might be in sleep mode (Render free tier)
+- Wait 30-60 seconds for cold start
+- Try the root endpoint: `https://petpalapi.onrender.com/`
+
+**🚨 CORS Errors**
+- Check if your frontend domain is in the CORS whitelist
+- For development, localhost is allowed
+- For production, ensure your domain is configured
+
+**🚨 Rate Limiting**
+- API limited to 100 requests per 15 minutes per IP
+- Wait for the rate limit window to reset
+- Check response headers for rate limit info
+
+**🚨 Invalid Request Body**
+- Ensure JSON format: `{"pet": "dog", "food": "apple"}`
+- Check Content-Type header: `application/json`
+- Both "pet" and "food" fields are required
+
+#### API Status Monitoring
+```bash
+# Check if API is responding
+curl -I https://petpalapi.onrender.com/
+
+# Get detailed status
+curl https://petpalapi.onrender.com/api/monitoring/status
+
+# Check request metrics
+curl https://petpalapi.onrender.com/api/monitoring/metrics
+```
