@@ -1,7 +1,7 @@
 # 🐾 PetPal - Comprehensive Pet Food Safety Platform
 
 <!--
-SEO Keywords: pet food safety, veterinary database, pet nutrition, food toxicity, animal health, pet care, dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes, AI-powered, multi-pet support, cross-platform, real-time analysis, gemini-ai, pet types, instant food safety checker
+SEO Keywords: pet food safety, veterinary database, pet nutrition, food toxicity, animal health, pet care, dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes, AI-powered, multi-pet support, cross-platform, real-time analysis, gemini-ai, pet types, instant food safety checker, open-source, veterinary, poisoning prevention, vet, toxicity
 -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,10 +10,11 @@ SEO Keywords: pet food safety, veterinary database, pet nutrition, food toxicity
 [![Express](https://img.shields.io/badge/Express-4.18+-000000.svg)](https://expressjs.com/)
 [![AI Powered](https://img.shields.io/badge/AI-Gemini%20AI-orange.svg)](https://ai.google.dev/)
 [![AI Fallback](https://img.shields.io/badge/AI%20Fallback-Google%20Gemini-blueviolet?style=flat-square)](https://ai.google.dev/)
+[![Open Source](https://img.shields.io/badge/Open%20Source-Veterinary%20Safety-green.svg)](https://github.com/Sunayana225/Petpal)
 
 **⚡ Powered by veterinary databases + fallback to Google Gemini AI for real-time analysis of unknown foods.**
 
-PetPal is an intelligent, AI-powered platform that helps pet owners instantly check the safety of foods for 9 different types of pets. Powered by veterinary data and AI fallback, it offers real-time analysis for dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, and snakes.
+PetPal is an **open-source veterinary food safety checker for pets** that helps pet owners easily check if food is safe for their dog, cat, or other animals using AI + veterinary data. Perfect for pet owners who want to prevent poisoning or food-based health risks, this intelligent platform offers instant safety analysis for 9 different types of pets through veterinary data and AI fallback technology.
 
 ## 📚 Table of Contents
 
