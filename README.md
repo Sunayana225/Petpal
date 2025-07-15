@@ -11,6 +11,8 @@ SEO Keywords: pet food safety, veterinary database, pet nutrition, food toxicity
 [![AI Powered](https://img.shields.io/badge/AI-Gemini%20AI-orange.svg)](https://ai.google.dev/)
 [![AI Fallback](https://img.shields.io/badge/AI%20Fallback-Google%20Gemini-blueviolet?style=flat-square)](https://ai.google.dev/)
 [![Open Source](https://img.shields.io/badge/Open%20Source-Veterinary%20Safety-green.svg)](https://github.com/Sunayana225/Petpal)
+[![API Status](https://img.shields.io/badge/API-Live%20on%20Render-brightgreen.svg)](https://petpalapi.onrender.com/)
+[![Deployment](https://img.shields.io/badge/Deploy-Production%20Ready-success.svg)](https://petpalapi.onrender.com/api/health)
 
 **⚡ Powered by veterinary databases + fallback to Google Gemini AI for real-time analysis of unknown foods.**
 
