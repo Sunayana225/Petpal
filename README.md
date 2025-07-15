@@ -1,7 +1,7 @@
 # 🐾 PetPal - Comprehensive Pet Food Safety Platform
 
 <!--
-SEO Keywords: pet food safety, veterinary database, pet nutrition, food toxicity, animal health, pet care, dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes, AI-powered, multi-pet support, cross-platform, real-time analysis, gemini-ai
+SEO Keywords: pet food safety, veterinary database, pet nutrition, food toxicity, animal health, pet care, dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes, AI-powered, multi-pet support, cross-platform, real-time analysis, gemini-ai, pet types, instant food safety checker
 -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,8 +9,32 @@ SEO Keywords: pet food safety, veterinary database, pet nutrition, food toxicity
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
 [![Express](https://img.shields.io/badge/Express-4.18+-000000.svg)](https://expressjs.com/)
 [![AI Powered](https://img.shields.io/badge/AI-Gemini%20AI-orange.svg)](https://ai.google.dev/)
+[![AI Fallback](https://img.shields.io/badge/AI%20Fallback-Google%20Gemini-blueviolet?style=flat-square)](https://ai.google.dev/)
 
-PetPal is an intelligent, AI-powered platform that helps pet owners make informed decisions about food safety across 9 different pet species. Using veterinary databases and AI technology, PetPal provides instant safety assessments for foods including dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, and snakes.
+**⚡ Powered by veterinary databases + fallback to Google Gemini AI for real-time analysis of unknown foods.**
+
+PetPal is an intelligent, AI-powered platform that helps pet owners instantly check the safety of foods for 9 different types of pets. Powered by veterinary data and AI fallback, it offers real-time analysis for dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, and snakes.
+
+## 📚 Table of Contents
+
+- [🌟 How It Works](#-how-it-works)
+- [🐾 Supported Animals](#-supported-animals)
+- [📊 API Examples](#-sample-data--api-examples)
+- [✨ Features & Capabilities](#-features--capabilities)
+- [🏗️ Backend API](#-backend-api)
+- [🖥️ Web Application](#-web-application)
+- [📱 Mobile App](#-mobile-app-react-native--expo)
+- [🚀 Quick Start Guide](#-quick-start-guide)
+- [🔧 Environment Variables](#-environment-variables--configuration)
+- [📱 Deployment](#-deployment)
+- [🧪 Testing & Quality](#-testing--quality-assurance)
+- [📖 API Documentation](#-complete-api-documentation)
+- [🛠️ Technology Stack](#-technology-stack--architecture)
+- [🎯 Live Demo](#-live-demo--screenshots)
+- [🤝 Contributing](#-contributing--development)
+- [📝 License](#-license)
+- [🙏 Acknowledgments](#-acknowledgments--data-sources)
+- [📞 Support & Resources](#-support--resources)
 
 ## 🌟 **How It Works**
 
@@ -101,7 +125,7 @@ petpal-web/             # React web application
 ## ✨ Features & Capabilities
 
 ### 🎯 **Core Features**
-- **Multi-Species Support**: Safety data for 9 different animal types
+- **Multi-Pet Support**: Safety data for 9 different pet types
 - **Instant Analysis**: Real-time food safety checking with immediate results
 - **Veterinary Database**: 570+ foods with professional safety data
 - **AI Fallback**: Intelligent analysis for unknown foods using Google Gemini AI
@@ -121,14 +145,14 @@ User Input → Database Lookup → AI Analysis → Safety Result
 - **Food Safety Checks**: `POST /api/food-safety/check` - Primary safety analysis endpoint
 - **Safe Foods Lists**: `GET /api/food-safety/safe/:petType` - Curated safe food collections
 - **Unsafe Foods Lists**: `GET /api/food-safety/unsafe/:petType` - Hazardous food warnings
-- **Supported Species**: `GET /api/food-safety/pets` - Complete pet type registry
+- **Supported Pet Types**: `GET /api/food-safety/pets` - Complete pet type registry
 - **External API Integration**: Intelligent fallback to AI when database coverage is incomplete
 - **Comprehensive Testing**: Full test suite with Jest and Supertest frameworks
 - **Robust Error Handling**: Detailed error messages with actionable guidance
 
 ### 🖥️ **Web Application**
 - **Modern UI**: Responsive design with Tailwind CSS styling
-- **Smart Pet Selection**: Choose from 9 supported pet species
+- **Smart Pet Selection**: Choose from 9 supported pet types
 - **Intelligent Food Search**: Advanced search with autocomplete functionality
 - **Detailed Results Display**: Color-coded safety information with comprehensive explanations
 - **Safe Foods Explorer**: Browse curated lists of safe foods by pet type
@@ -455,7 +479,7 @@ curl -X POST localhost:3000/api/food-safety/check \
 - **Commits**: Use conventional commit messages
 
 ### Areas for Contribution
-- 🐾 **New Pet Types**: Add support for more animals
+- 🐾 **New Pet Types**: Add support for more pet types
 - 🥗 **Food Database**: Expand the food safety database
 - 🤖 **AI Improvements**: Enhance AI analysis accuracy
 - 🎨 **UI/UX**: Improve user interface and experience
@@ -472,7 +496,7 @@ Found a bug or have a feature request? Please check existing issues first, then:
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments & Data Sources
 
