@@ -1,5 +1,13 @@
 # 🐾 PetPal - Comprehensive Pet Food Safety Platform
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
+[![Express](https://img.shields.io/badge/Express-4.18+-000000.svg)](https://expressjs.com/)
+[![AI Powered](https://img.shields.io/badge/AI-Gemini%20%2B%20OpenAI-orange.svg)](https://ai.google.dev/)
+
+**🔍 Keywords:** pet food safety, veterinary database, pet nutrition, food toxicity, animal health, pet care, dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes, AI-powered, multi-pet support
+
 PetPal is an intelligent platform that helps pet owners make informed decisions about food safety for their beloved companions. Using veterinary databases and AI technology, PetPal provides instant safety assessments for foods across **9 different pet types** including dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, and snakes.
 
 ## 🌟 **How It Works**
