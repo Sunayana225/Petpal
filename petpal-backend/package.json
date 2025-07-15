@@ -37,11 +37,19 @@
     "turtles",
     "fish",
     "lizards",
-    "snakes"
+    "snakes",
+    "open-source",
+    "veterinary",
+    "vet",
+    "toxicity",
+    "poisoning-prevention",
+    "pet-health",
+    "gemini-ai",
+    "food-safety"
   ],
   "author": "Sunayana225",
   "license": "MIT",
-  "description": "Intelligent pet food safety platform with veterinary database and AI analysis for 9 different pet types",
+  "description": "AI-powered tool to check if food is safe for pets. Uses veterinary data + Gemini fallback. Works for 9 pet types. Backend API (Express + TypeScript).",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.5",
