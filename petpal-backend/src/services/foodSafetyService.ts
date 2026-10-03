@@ -1,9 +1,8 @@
-import { AIService } from './aiService';
-import { ExternalApiService } from './externalApiService';
-import { FoodSafetyRepository, foodSafetyRepository, type IndexedFood } from './foodSafetyRepository';
 import type { FoodItem, FoodSafetyResult, SafetyLevel } from '../types/foodSafety';
 import { normalizeFoodKey, normalizePetKey, type PetKey } from '../utils/normalization';
 import { TTL, TtlCache } from '../utils/cache';
+import { type AnswerSource, defaultAnswerSources } from './answerSources';
+import { FoodSafetyRepository, foodSafetyRepository, type IndexedFood } from './foodSafetyRepository';
 
 // Re-exported so existing importers keep working.
 export type { FoodItem, FoodSafetyResult };
@@ -36,93 +35,28 @@ function buildMessage(
 }
 
 /**
- * Resolve a food PetPal has no local record for: try the free Open Pet Food
- * Facts barcode/product database first, then fall back to Gemini.
- *
- * Both remote calls are allowed to fail independently — a dead upstream must
- * degrade to an `unknown` verdict, never to a 500.
- */
-async function resolveRemotely(
-  petKey: PetKey,
-  pet: string,
-  food: string,
-): Promise<FoodSafetyResult> {
-  try {
-    const external = await ExternalApiService.searchAllSources(food, petKey);
-    if (external) {
-      return {
-        pet,
-        food,
-        safety: external.safety,
-        message: `${external.message} (Open Pet Food Facts)`,
-        details: {
-          food,
-          safety: external.safety,
-          description: external.details.description,
-          source: external.details.source,
-          brand: external.details.brand,
-          product_name: external.details.product_name,
-          barcode: external.details.barcode,
-          image_url: external.details.image_url,
-          ingredients: external.details.ingredients,
-          recommendation: external.details.recommendation,
-        },
-        source: 'external',
-      };
-    }
-  } catch (error) {
-    console.error('[FoodSafetyService] External lookup failed:', error);
-  }
-
-  try {
-    const ai = await AIService.getFoodSafetyAdvice(food, petKey);
-    return {
-      pet,
-      food,
-      safety: ai.safety,
-      message: ai.message,
-      details: {
-        food: ai.food,
-        safety: ai.safety,
-        description: ai.details.description,
-        symptoms: ai.details.symptoms,
-        benefits: ai.details.benefits,
-        alternatives: ai.details.alternatives,
-        preparation: ai.details.preparation,
-        recommendation: ai.details.recommendation,
-        severity: ai.details.severity,
-      },
-      source: 'ai',
-    };
-  } catch (error) {
-    console.error('[FoodSafetyService] AI lookup failed:', error);
-    return {
-      pet,
-      food,
-      safety: 'unknown',
-      message: buildMessage('unknown', food, pet),
-      source: 'none',
-    };
-  }
-}
-
-/**
  * Front door for food-safety questions.
  *
  * Resolution order, cheapest and most trustworthy first:
  *
  *  1. the merged in-memory veterinary database (instant, free);
- *  2. Open Pet Food Facts (free, remote);
- *  3. Gemini (paid, remote);
- *  4. an honest `unknown`.
+ *  2. the injected {@link AnswerSource} chain (free external database, then
+ *     the paid AI by default);
+ *  3. an honest `unknown`.
  *
- * Steps 2–4 are memoised with in-flight coalescing so N concurrent users
- * asking the same question cost exactly one upstream round trip.
+ * Step 2 is memoised with in-flight coalescing so N concurrent users asking the
+ * same question cost exactly one upstream round trip.
+ *
+ * Dependencies are supplied through the constructor so the service can be
+ * composed and tested without reaching for module-level singletons.
  */
 export class FoodSafetyService {
   private readonly answerCache = new TtlCache<FoodSafetyResult>(500);
 
-  constructor(private readonly repository: FoodSafetyRepository = foodSafetyRepository) {}
+  constructor(
+    private readonly repository: FoodSafetyRepository = foodSafetyRepository,
+    private readonly sources: AnswerSource[] = defaultAnswerSources(),
+  ) {}
 
   getSupportedPets(): string[] {
     return this.repository.getSupportedPets();
@@ -185,10 +119,38 @@ export class FoodSafetyService {
     const { value } = await this.answerCache.getOrSet(
       cacheKey,
       (result) => (result.safety === 'unknown' ? TTL.unknown : TTL.ai),
-      () => resolveRemotely(petKey, pet, food),
+      () => this.resolveRemotely(petKey, pet, food),
     );
 
     return { ...value, pet, food };
+  }
+
+  /**
+   * Walk the injected answer sources in order and take the first verdict. A
+   * source that throws or declines (`null`) must never fail the request, so the
+   * chain degrades to an honest `unknown`.
+   */
+  private async resolveRemotely(
+    petKey: PetKey,
+    pet: string,
+    food: string,
+  ): Promise<FoodSafetyResult> {
+    for (const source of this.sources) {
+      try {
+        const result = await source.resolve(petKey, pet, food);
+        if (result) return result;
+      } catch (error) {
+        console.error(`[FoodSafetyService] ${source.source} lookup failed:`, error);
+      }
+    }
+
+    return {
+      pet,
+      food,
+      safety: 'unknown',
+      message: buildMessage('unknown', food, pet),
+      source: 'none',
+    };
   }
 
   private fromDatabase(record: IndexedFood, pet: string, food: string): FoodSafetyResult {
