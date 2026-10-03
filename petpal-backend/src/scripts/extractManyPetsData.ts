@@ -77,14 +77,22 @@ const manyPetsData: ManyPetsFood[] = [
 ];
 
 // Convert ManyPets data to our database format
+interface GeneratedFood {
+  food: string;
+  description: string;
+  source: string;
+  severity?: string;
+  recommendation?: string;
+}
+
 function convertToOurFormat() {
-  const safeForDogs: any[] = [];
-  const unsafeForDogs: any[] = [];
-  const cautionForDogs: any[] = [];
+  const safeForDogs: GeneratedFood[] = [];
+  const unsafeForDogs: GeneratedFood[] = [];
+  const cautionForDogs: GeneratedFood[] = [];
   
-  const safeForCats: any[] = [];
-  const unsafeForCats: any[] = [];
-  const cautionForCats: any[] = [];
+  const safeForCats: GeneratedFood[] = [];
+  const unsafeForCats: GeneratedFood[] = [];
+  const cautionForCats: GeneratedFood[] = [];
 
   manyPetsData.forEach(item => {
     const foodItem = {

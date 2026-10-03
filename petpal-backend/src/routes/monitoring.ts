@@ -140,7 +140,6 @@ router.get('/status', asyncHandler(async (req: Request, res: Response) => {
     environment: {
       nodeEnv: process.env.NODE_ENV,
       hasGeminiKey: !!process.env.GEMINI_API_KEY,
-      hasOpenAIKey: !!process.env.OPENAI_API_KEY,
       port: process.env.PORT || 3001
     },
     health: {

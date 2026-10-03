@@ -2,6 +2,7 @@ import request from 'supertest';
 import type { Express } from 'express';
 
 import { createApp } from '../app';
+import { API_VERSION } from '../version';
 
 describe('PetPal API Tests', () => {
   let app: Express;
@@ -21,7 +22,7 @@ describe('PetPal API Tests', () => {
       expect(response.body).toHaveProperty('status', 'OK');
       expect(response.body).toHaveProperty('message', 'PetPal API is running!');
       expect(response.body).toHaveProperty('timestamp');
-      expect(response.body).toHaveProperty('version', '1.0.0');
+      expect(response.body).toHaveProperty('version', API_VERSION);
       expect(response.body).toHaveProperty('services');
     });
   });

@@ -13,9 +13,10 @@ import {
 import { checkFoodSafetyHandler, foodSafetyRouter } from './routes/foodSafety';
 import { monitoringRouter, trackMetrics } from './routes/monitoring';
 import { SUPPORTED_PET_KEYS } from './utils/normalization';
+import { API_VERSION } from './version';
 
-/** Bumped whenever the response contract changes. */
-export const API_VERSION = '2.0.0';
+/** Re-exported for existing importers; the value lives in `./version`. */
+export { API_VERSION };
 
 const DEV_ORIGINS = [
   'http://localhost:3000',

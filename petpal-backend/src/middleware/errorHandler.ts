@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
+import { API_VERSION } from '../version';
+
 export interface AppError extends Error {
   statusCode?: number;
   isOperational?: boolean;
@@ -143,7 +145,7 @@ export const healthCheck = (req: Request, res: Response) => {
     message: 'PetPal API is running!',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    version: '1.0.0',
+    version: API_VERSION,
     uptime: Math.floor(process.uptime()),
     memory: {
       used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
@@ -151,8 +153,7 @@ export const healthCheck = (req: Request, res: Response) => {
       external: Math.round(process.memoryUsage().external / 1024 / 1024)
     },
     services: {
-      gemini: !!process.env.GEMINI_API_KEY,
-      openai: !!process.env.OPENAI_API_KEY
+      gemini: !!process.env.GEMINI_API_KEY
     },
     requestId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   };

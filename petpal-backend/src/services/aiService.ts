@@ -6,6 +6,23 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/
 /** Gemini is a fallback, not a dependency — it never gets more than 8s. */
 const GEMINI_TIMEOUT_MS = 8000;
 
+/** The slice of Gemini's response envelope that we actually read. */
+interface GeminiResponse {
+  candidates?: { content?: { parts?: { text?: string }[] } }[];
+}
+
+/** Sections we try to lift out of a free-text Gemini answer. */
+type ResponseSections = {
+  safetyAssessment?: string;
+  nutritionalInfo?: string;
+  healthRisks?: string;
+  preparation?: string;
+  serving?: string;
+  emergency?: string;
+  alternatives?: string;
+};
+
+
 export interface AIFoodSafetyResponse {
   food: string;
   pet: string;
@@ -81,7 +98,7 @@ export class AIService {
         throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
       }
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as GeminiResponse;
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
       if (!text) {
@@ -388,19 +405,11 @@ Please provide specific, practical advice using only plain text formatting. No a
     return formatted.trim();
   }
 
-  private static parseResponseSections(response: string): {
-    safetyAssessment?: string;
-    nutritionalInfo?: string;
-    healthRisks?: string;
-    preparation?: string;
-    serving?: string;
-    emergency?: string;
-    alternatives?: string;
-  } {
-    const sections: any = {};
+  private static parseResponseSections(response: string): ResponseSections {
+    const sections: ResponseSections = {};
 
     // Define section patterns
-    const sectionPatterns = [
+    const sectionPatterns: { key: keyof ResponseSections; patterns: string[] }[] = [
       { key: 'safetyAssessment', patterns: ['SAFETY ASSESSMENT:', 'Overall Safety Level:', 'Detailed Explanation:'] },
       { key: 'nutritionalInfo', patterns: ['NUTRITIONAL INFORMATION:', 'Key Nutrients and Benefits:', 'Nutrients and Benefits:'] },
       { key: 'healthRisks', patterns: ['Potential Health Risks:', 'Health Risks:', 'Risks:'] },
