@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PetPal API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #B8956A 0%, #9C6C3F 15%, #8B5E3C 35%, #7A5233 55%, #6B4E37 75%, #5D4037 90%, #4A2C20 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #2D1B1B;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #4A3429;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #D29952;
+            border-radius: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background: linear-gradient(135deg, #8B5E3C, #6B4E37);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6B4E37, #5D4037);
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #F8F3E8;
+            border-radius: 10px;
+            border: 2px solid #D29952;
+        }
+        .loading {
+            text-align: center;
+            color: #8B5E3C;
+            font-style: italic;
+        }
+        .error {
+            color: #C44F32;
+            background: #FEF2F2;
+            border-color: #C44F32;
+        }
+        .success {
+            color: #4F944F;
+            background: #F0FDF4;
+            border-color: #4F944F;
+        }
+        pre {
+            background: #2D1B1B;
+            color: #F5E6D3;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐾 Test PetPal API</h1>
+        
+        <div class="form-group">
+            <label for="animal">Select Pet Type:</label>
+            <select id="animal">
+                <option value="dog">Dog</option>
+                <option value="cat">Cat</option>
+                <option value="rabbit">Rabbit</option>
+                <option value="hamster">Hamster</option>
+                <option value="bird">Bird</option>
+                <option value="turtle">Turtle</option>
+                <option value="fish">Fish</option>
+                <option value="lizard">Lizard</option>
+                <option value="snake">Snake</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="food">Enter Food Name:</label>
+            <input type="text" id="food" placeholder="e.g., chocolate, apple, carrot" />
+        </div>
+        
+        <button onclick="testAPI()">🔍 Check Food Safety</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const animal = document.getElementById('animal').value;
+            const food = document.getElementById('food').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!food) {
+                resultDiv.innerHTML = '<div class="result error">Please enter a food name!</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="result loading">🔄 Checking food safety...</div>';
+            
+            try {
+                const response = await fetch(
+                    `https://petpalapi.onrender.com/api/check?animal=${encodeURIComponent(animal)}&food=${encodeURIComponent(food)}`
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                const statusClass = data.status === 'safe' ? 'success' : 
+                                  data.status === 'unsafe' ? 'error' : 'result';
+                
+                resultDiv.innerHTML = `
+                    <div class="result ${statusClass}">
+                        <h3>🎯 Result for ${data.animal || animal} eating ${data.food || food}</h3>
+                        <p><strong>Status:</strong> ${data.status || 'unknown'}</p>
+                        <p><strong>Reason:</strong> ${data.reason || 'No information available'}</p>
+                        
+                        <h4>📋 Raw API Response:</h4>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error</h3>
+                        <p>Failed to check food safety: ${error.message}</p>
+                        <p>Please check if the API is running and accessible.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Allow Enter key to trigger search
+        document.getElementById('food').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                testAPI();
+            }
+        });
+    </script>
+</body>
+</html>
