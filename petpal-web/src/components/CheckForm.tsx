@@ -1,16 +1,13 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import { useState, type FormEvent } from 'react';
 
+import { EASE } from '../motion/tokens';
 import { PETS } from '../pets';
 import { api, ApiError } from '../services/api';
 import type { FoodSafetyResult } from '../types';
 import ResultCard from './ResultCard';
 
-const QUICK_TRIES = [
-  { food: 'chocolate', label: '🍫 chocolate' },
-  { food: 'apple', label: '🍎 apple' },
-  { food: 'grapes', label: '🍇 grapes' },
-  { food: 'carrot', label: '🥕 carrot' },
-];
+const QUICK_TRIES = ['chocolate', 'apple', 'grapes', 'carrot'];
 
 export default function CheckForm() {
   const [pet, setPet] = useState('dogs');
@@ -44,44 +41,51 @@ export default function CheckForm() {
 
   return (
     <div>
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
-      >
+      <form onSubmit={handleSubmit} className="border-t border-slate pt-10">
         <fieldset>
-          <legend className="text-sm font-semibold text-slate-700">
-            1. Who is eating?
-          </legend>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <legend className="eyebrow">01 — Who is eating?</legend>
+          <div className="mt-6 flex flex-wrap gap-2">
             {PETS.map((item) => {
               const selected = item.key === pet;
               return (
-                <button
+                <motion.button
                   key={item.key}
                   type="button"
+                  whileTap={{ scale: 0.97 }}
                   aria-pressed={selected}
                   title={item.blurb}
                   onClick={() => setPet(item.key)}
-                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                  className={`relative overflow-hidden border px-4 py-2.5 text-[12px] uppercase tracking-wide-cap transition-colors duration-500 ${
                     selected
-                      ? 'border-brand-600 bg-brand-600 text-white'
-                      : 'border-slate-300 bg-white text-slate-700 hover:border-brand-400 hover:text-brand-700'
+                      ? 'border-charcoal text-parchment'
+                      : 'border-slate text-charcoal hover:border-charcoal'
                   }`}
                 >
-                  <span aria-hidden="true">{item.emoji}</span>
-                  {item.label}
-                </button>
+                  {selected && (
+                    <motion.span
+                      layoutId="pet-selection"
+                      className="absolute inset-0 bg-charcoal"
+                      transition={{ duration: 0.5, ease: EASE }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    <span aria-hidden="true" className="text-sm">
+                      {item.emoji}
+                    </span>
+                    {item.label}
+                  </span>
+                </motion.button>
               );
             })}
           </div>
         </fieldset>
 
-        <div className="mt-6">
-          <label htmlFor="food" className="text-sm font-semibold text-slate-700">
-            2. What food?
+        <div className="mt-12">
+          <label htmlFor="food" className="eyebrow block">
+            02 — What food?
           </label>
 
-          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-stretch">
             <input
               id="food"
               name="food"
@@ -90,60 +94,82 @@ export default function CheckForm() {
               list="common-foods"
               value={food}
               onChange={(event) => setFood(event.target.value)}
-              placeholder='e.g. "chocolate" or "bell peppers"'
-              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-brand-500 focus:outline-none"
+              placeholder="Chocolate, bell peppers, salmon…"
+              className="w-full border border-slate bg-transparent px-5 py-3.5 text-base text-ink placeholder:text-mist focus:border-ink focus:outline-none transition-colors duration-500"
             />
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-brand-600 px-6 py-2.5 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="group relative overflow-hidden border border-charcoal bg-charcoal px-10 py-3.5 text-[12px] uppercase tracking-wide-cap text-parchment disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? 'Checking…' : 'Check safety'}
+              <span className="absolute inset-0 -translate-y-full bg-forest transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0" />
+              <span className="relative z-10">{loading ? 'Checking…' : 'Check safety'}</span>
             </button>
           </div>
 
           <datalist id="common-foods">
             {QUICK_TRIES.map((item) => (
-              <option key={item.food} value={item.food} />
+              <option key={item} value={item} />
             ))}
           </datalist>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-            <span>Try:</span>
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] uppercase tracking-wide-cap text-mist">
+            <span>Try</span>
             {QUICK_TRIES.map((item) => (
               <button
-                key={item.food}
+                key={item}
                 type="button"
-                onClick={() => setFood(item.food)}
-                className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 transition hover:border-brand-400 hover:text-brand-700"
+                onClick={() => setFood(item)}
+                className="link-line text-stone hover:text-ink transition-colors duration-500"
               >
-                {item.label}
+                {item}
               </button>
             ))}
           </div>
         </div>
       </form>
 
-      {error && (
-        <p
-          role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-        >
-          {error}
-        </p>
-      )}
+      <AnimatePresence mode="wait">
+        {error && (
+          <motion.p
+            key="error"
+            role="alert"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: EASE }}
+            className="mt-8 border-l-2 border-unsafe pl-4 text-sm text-unsafe"
+          >
+            {error}
+          </motion.p>
+        )}
 
-      {loading && (
-        <p role="status" className="mt-4 text-sm text-slate-500">
-          Asking the veterinary database…
-        </p>
-      )}
+        {loading && (
+          <motion.p
+            key="loading"
+            role="status"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="mt-10 text-sm italic text-mist"
+          >
+            Consulting the veterinary database…
+          </motion.p>
+        )}
 
-      {result && !loading && (
-        <div className="mt-4">
-          <ResultCard result={result} />
-        </div>
-      )}
+        {result && !loading && (
+          <motion.div
+            key="result"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7, ease: EASE }}
+            className="mt-14"
+          >
+            <ResultCard result={result} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

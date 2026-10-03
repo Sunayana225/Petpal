@@ -1,46 +1,111 @@
 @import "tailwindcss";
 
 /*
- * PetPal design tokens. Tailwind v4 pulls these straight from `@theme`, so
- * `bg-brand`, `text-brand-ink` etc. become utility classes automatically —
- * no tailwind.config.js needed.
+ * PetPal design system.
+ *
+ * A luxury editorial language after Aesop and Saint Laurent: a parchment
+ * canvas, charcoal ink, hairline rules instead of shadows, zero corner radius,
+ * and a single botanical accent. Tokens live in Tailwind v4's `@theme`, so
+ * `bg-parchment`, `text-charcoal`, `font-display` etc. are generated for us.
  */
 @theme {
-  --color-brand-50: #f0fdfa;
-  --color-brand-100: #ccfbf1;
-  --color-brand-200: #99f6e4;
-  --color-brand-300: #5eead4;
-  --color-brand-400: #2dd4bf;
-  --color-brand-500: #14b8a6;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
-  --color-brand-900: #134e4a;
+  /* ---- Surfaces & ink ------------------------------------------------- */
+  --color-parchment: #fffef2;
+  --color-alabaster: #ffffff;
+  --color-ink: #000000;
+  --color-carbon: #1a1a18;
+  --color-charcoal: #333333;
+  --color-stone: #666666;
+  --color-mist: #8f8f84;
+  --color-slate: #d6d5cc;
 
-  --color-safe: #16a34a;
-  --color-caution: #d97706;
-  --color-unsafe: #dc2626;
-  --color-unknown: #64748b;
+  /* ---- Accents -------------------------------------------------------- */
+  --color-umber: #945c26;
+  --color-forest: #223a26;
+  --color-moss: #486030;
+  --color-sage: #909078;
 
-  --font-display: "Segoe UI", system-ui, -apple-system, sans-serif;
+  /* ---- Verdicts (muted, earth-toned) ---------------------------------- */
+  --color-safe: #3f5a3a;
+  --color-caution: #945c26;
+  --color-unsafe: #7a2e22;
+  --color-unknown: #8f8f84;
+
+  /* ---- Type ----------------------------------------------------------- */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+
+  --tracking-luxe: 0.26em;
+  --tracking-wide-cap: 0.16em;
+
+  /* ---- Motion --------------------------------------------------------- */
+  --ease-luxe: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-:root {
-  color-scheme: light;
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-parchment);
+    color: var(--color-charcoal);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+    font-feature-settings: "ss01" 1, "cv11" 1;
+  }
+
+  ::selection {
+    background: var(--color-forest);
+    color: var(--color-parchment);
+  }
 }
 
-body {
-  margin: 0;
-  font-family: var(--font-display);
-  background-color: #f8fafc;
-  color: #0f172a;
-  -webkit-font-smoothing: antialiased;
+@layer components {
+  /* A hairline rule — the primary means of separation in this system. */
+  .hairline {
+    border-bottom: 1px solid var(--color-slate);
+  }
+
+  /* Small-caps eyebrow label used above headings throughout the site. */
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: var(--tracking-luxe);
+    text-transform: uppercase;
+    color: var(--color-mist);
+  }
+
+  /* Character-by-character editorial link underline. */
+  .link-line {
+    position: relative;
+    display: inline-block;
+  }
+  .link-line::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    height: 1px;
+    width: 100%;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.6s var(--ease-luxe);
+  }
+  .link-line:hover::after {
+    transform: scaleX(1);
+  }
 }
 
 /* Visible focus ring everywhere — keyboard users should never lose the cursor. */
 :focus-visible {
-  outline: 3px solid var(--color-brand-500);
-  outline-offset: 2px;
+  outline: 2px solid var(--color-forest);
+  outline-offset: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -50,5 +115,6 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

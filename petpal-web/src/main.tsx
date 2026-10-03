@@ -4,6 +4,10 @@ import { BrowserRouter } from 'react-router-dom';
 
 import App from './App';
 import './index.css';
+import { initAnalytics } from './lib/analytics';
+
+// Capture campaign parameters before React Router can touch the URL.
+initAnalytics();
 
 const container = document.getElementById('root');
 if (!container) {

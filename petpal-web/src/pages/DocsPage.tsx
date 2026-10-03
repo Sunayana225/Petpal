@@ -1,3 +1,7 @@
+import { Reveal } from '../motion/primitives';
+import { SAFETY_META } from '../pets';
+import type { SafetyLevel } from '../types';
+
 interface Endpoint {
   method: string;
   path: string;
@@ -31,76 +35,65 @@ const ENDPOINTS: Endpoint[] = [
   { method: 'GET', path: '/api/monitoring/status', description: 'Process health snapshot' },
 ];
 
-const METHOD_STYLES: Record<string, string> = {
-  GET: 'bg-sky-100 text-sky-800',
-  POST: 'bg-violet-100 text-violet-800',
-};
+const VERDICTS: SafetyLevel[] = ['safe', 'caution', 'unsafe', 'unknown'];
 
 export default function DocsPage() {
   return (
-    <div className="space-y-8">
-      <header>
-        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-          API documentation
+    <div className="mx-auto max-w-[1600px] px-5 py-20 sm:px-10">
+      <Reveal>
+        <p className="eyebrow">API reference</p>
+      </Reveal>
+      <Reveal delay={0.05}>
+        <h1 className="mt-5 max-w-3xl font-display text-4xl font-light leading-tight tracking-tight text-ink sm:text-6xl">
+          Every endpoint, plainly documented.
         </h1>
-        <p className="mt-1 max-w-2xl text-sm text-slate-600">
-          The checker above is a thin client over this API. Every endpoint is
-          JSON, rate-limited to 100 requests / 15 minutes, and returns an honest
-          <code className="mx-1 rounded bg-slate-100 px-1">unknown</code>
-          rather than guessing.
+      </Reveal>
+      <Reveal delay={0.1}>
+        <p className="mt-6 max-w-2xl text-sm leading-relaxed text-stone">
+          The checker is a thin client over this API. Every endpoint is JSON, rate-limited to
+          100 requests / 15 minutes, and returns an honest{' '}
+          <span className="font-mono text-charcoal">unknown</span> rather than guessing.
         </p>
-      </header>
+      </Reveal>
 
-      <section aria-labelledby="endpoints">
-        <h2 id="endpoints" className="text-lg font-semibold text-slate-900">
+      {/* Endpoints */}
+      <section aria-labelledby="endpoints" className="mt-16">
+        <h2 id="endpoints" className="eyebrow">
           Endpoints
         </h2>
-        <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-                <th scope="col" className="px-4 py-3">Method</th>
-                <th scope="col" className="px-4 py-3">Path</th>
-                <th scope="col" className="px-4 py-3">Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ENDPOINTS.map((endpoint) => (
-                <tr key={`${endpoint.method}${endpoint.path}`} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3 align-top">
-                    <span
-                      className={`rounded px-2 py-0.5 text-xs font-bold ${METHOD_STYLES[endpoint.method]}`}
-                    >
-                      {endpoint.method}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 align-top font-mono text-xs text-slate-800">
-                    {endpoint.path}
-                  </td>
-                  <td className="px-4 py-3 align-top text-slate-600">
-                    {endpoint.description}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-6 border-t border-slate">
+          {ENDPOINTS.map((endpoint) => (
+            <div
+              key={`${endpoint.method}${endpoint.path}`}
+              className="grid grid-cols-[4rem_1fr] items-baseline gap-x-8 gap-y-1 border-b border-slate py-4 transition-colors duration-500 hover:bg-alabaster sm:grid-cols-[4rem_minmax(18rem,1fr)_1.2fr] sm:px-2"
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-wide-cap text-forest">
+                {endpoint.method}
+              </span>
+              <code className="font-mono text-xs text-charcoal sm:text-[13px]">
+                {endpoint.path}
+              </code>
+              <span className="col-span-2 text-sm text-stone sm:col-span-1">
+                {endpoint.description}
+              </span>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section aria-labelledby="example" className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <h2 id="example" className="text-lg font-semibold text-slate-900">
-            Example request
-          </h2>
-          <pre className="mt-3 overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs text-slate-100">
+      {/* Examples */}
+      <section className="mt-20 grid gap-8 lg:grid-cols-2">
+        <Reveal>
+          <h2 className="eyebrow">Example request</h2>
+          <pre className="mt-6 overflow-x-auto bg-carbon p-6 text-xs leading-relaxed text-parchment/90">
 {`curl -X POST /api/food-safety/check \\
   -H "Content-Type: application/json" \\
   -d '{"pet":"dog","food":"chocolate"}'`}
           </pre>
-        </div>
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900">Example response</h2>
-          <pre className="mt-3 overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs text-slate-100">
+        </Reveal>
+        <Reveal delay={0.08}>
+          <h2 className="eyebrow">Example response</h2>
+          <pre className="mt-6 overflow-x-auto bg-carbon p-6 text-xs leading-relaxed text-parchment/90">
 {`{
   "pet": "dog",
   "food": "chocolate",
@@ -110,39 +103,25 @@ export default function DocsPage() {
   "processingTime": "1ms"
 }`}
           </pre>
-        </div>
+        </Reveal>
       </section>
 
-      <section aria-labelledby="verdicts">
-        <h2 id="verdicts" className="text-lg font-semibold text-slate-900">
+      {/* Verdicts */}
+      <section aria-labelledby="verdicts" className="mt-20">
+        <h2 id="verdicts" className="eyebrow">
           Verdicts
         </h2>
-        <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-            <dt className="font-semibold text-green-800">✅ safe</dt>
-            <dd className="mt-1 text-sm text-green-700">
-              Generally fine in normal amounts.
-            </dd>
-          </div>
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <dt className="font-semibold text-amber-800">⚠️ caution</dt>
-            <dd className="mt-1 text-sm text-amber-700">
-              Moderation only — check with your vet.
-            </dd>
-          </div>
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-            <dt className="font-semibold text-red-800">❌ unsafe</dt>
-            <dd className="mt-1 text-sm text-red-700">
-              Do not feed. Contact a vet if consumed.
-            </dd>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <dt className="font-semibold text-slate-800">❓ unknown</dt>
-            <dd className="mt-1 text-sm text-slate-600">
-              We have no data — consult a veterinarian.
-            </dd>
-          </div>
-        </dl>
+        <div className="mt-6 grid gap-px border border-slate bg-slate sm:grid-cols-2 lg:grid-cols-4">
+          {VERDICTS.map((verdict) => {
+            const meta = SAFETY_META[verdict];
+            return (
+              <div key={verdict} className="bg-parchment p-6">
+                <p className={`font-display text-2xl ${meta.text}`}>{meta.label}</p>
+                <p className="mt-3 text-sm leading-relaxed text-stone">{meta.gloss}</p>
+              </div>
+            );
+          })}
+        </div>
       </section>
     </div>
   );

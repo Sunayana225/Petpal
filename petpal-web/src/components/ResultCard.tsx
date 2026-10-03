@@ -1,6 +1,7 @@
+import { Reveal } from '../motion/primitives';
 import { SAFETY_META } from '../pets';
+import type { FoodSafetyResult, SafetyLevel } from '../types';
 import SafetyBadge from './SafetyBadge';
-import type { FoodSafetyResult } from '../types';
 
 const SOURCE_LABELS: Record<string, string> = {
   database: 'Veterinary database',
@@ -15,38 +16,32 @@ const SEVERITY_LABELS: Record<string, string> = {
   high: 'High severity',
 };
 
-/** A bulleted block with a heading, rendered only when it has content. */
+/** A hairline-separated block of bulleted items, revealed as it enters view. */
 function DetailSection({
   title,
   items,
-  tone = 'slate',
+  tone = 'unknown',
 }: {
   title: string;
   items?: string[];
-  tone?: 'slate' | 'red' | 'green';
+  tone?: SafetyLevel;
 }) {
   if (!items || items.length === 0) return null;
 
-  const bulletColors = {
-    slate: 'text-slate-700',
-    red: 'text-red-800',
-    green: 'text-green-800',
-  } as const;
-
   return (
-    <div>
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-        {title}
-      </h4>
-      <ul className={`mt-1 space-y-1 text-sm ${bulletColors[tone]}`}>
-        {items.map((item) => (
-          <li key={item} className="flex gap-2">
-            <span aria-hidden="true">•</span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Reveal>
+      <div className="border-t border-slate pt-4">
+        <h4 className="eyebrow">{title}</h4>
+        <ul className={`mt-3 space-y-2 text-sm ${SAFETY_META[tone].text}`}>
+          {items.map((item) => (
+            <li key={item} className="flex gap-3">
+              <span aria-hidden="true" className="mt-2 h-px w-3 shrink-0 bg-current opacity-60" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Reveal>
   );
 }
 
@@ -54,25 +49,31 @@ export default function ResultCard({ result }: { result: FoodSafetyResult }) {
   const meta = SAFETY_META[result.safety];
   const details = result.details;
   const sourceLabel = result.source ? SOURCE_LABELS[result.source] : undefined;
+  const hasDetails =
+    details &&
+    ((details.symptoms?.length ?? 0) > 0 ||
+      (details.benefits?.length ?? 0) > 0 ||
+      (details.alternatives?.length ?? 0) > 0 ||
+      Boolean(details.preparation));
 
   return (
-    <article
-      aria-live="polite"
-      className={`rounded-2xl border-2 bg-white p-5 shadow-sm sm:p-6 ${meta.border}`}
-    >
-      <header className="flex flex-wrap items-start justify-between gap-3">
+    <article aria-live="polite" className={`border-t-2 ${meta.border} bg-parchment`}>
+      <header className="flex flex-wrap items-start justify-between gap-6 pt-8">
         <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+          <p className="eyebrow">Verdict</p>
+          <h2
+            className={`mt-3 font-display text-5xl leading-none tracking-tight sm:text-6xl ${meta.text}`}
+          >
+            {meta.label}
+          </h2>
+          <p className="mt-4 text-[12px] uppercase tracking-wide-cap text-stone">
             {result.pet} · {result.food}
           </p>
-          <h2 className="mt-1 text-2xl font-bold text-slate-900">
-            {meta.emoji} {meta.label}
-          </h2>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {details?.severity && (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            <span className="text-[11px] uppercase tracking-wide-cap text-mist">
               {SEVERITY_LABELS[details.severity]}
             </span>
           )}
@@ -80,39 +81,46 @@ export default function ResultCard({ result }: { result: FoodSafetyResult }) {
         </div>
       </header>
 
-      <p className="mt-4 text-base leading-relaxed text-slate-800">{result.message}</p>
+      <p className="mt-10 max-w-2xl font-display text-2xl leading-snug text-ink">
+        {result.message}
+      </p>
 
       {details?.description && details.description !== result.message && (
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+        <p className="mt-5 max-w-2xl text-sm leading-relaxed text-stone">
           {details.description}
         </p>
       )}
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <DetailSection title="Warning signs" items={details?.symptoms} tone="red" />
-        <DetailSection title="Benefits" items={details?.benefits} tone="green" />
-        <DetailSection title="Safer alternatives" items={details?.alternatives} />
-        <DetailSection
-          title="How to prepare"
-          items={details?.preparation ? [details.preparation] : undefined}
-        />
-      </div>
-
-      {details?.recommendation && (
-        <p className="mt-5 rounded-lg border border-brand-200 bg-brand-50 p-3 text-sm text-brand-900">
-          <strong>Vet-minded advice:</strong> {details.recommendation}
-        </p>
+      {hasDetails && (
+        <div className="mt-12 grid gap-x-12 gap-y-8 sm:grid-cols-2">
+          <DetailSection title="Warning signs" items={details?.symptoms} tone="unsafe" />
+          <DetailSection title="Benefits" items={details?.benefits} tone="safe" />
+          <DetailSection title="Safer alternatives" items={details?.alternatives} />
+          <DetailSection
+            title="How to prepare"
+            items={details?.preparation ? [details.preparation] : undefined}
+          />
+        </div>
       )}
 
-      <footer className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-100 pt-3 text-xs text-slate-400">
+      {details?.recommendation && (
+        <Reveal className="mt-12">
+          <p className="border-l-2 border-forest pl-5 text-sm leading-relaxed text-charcoal">
+            <span className="eyebrow block">Vet-minded advice</span>
+            <span className="mt-2 block">{details.recommendation}</span>
+          </p>
+        </Reveal>
+      )}
+
+      <footer className="mt-12 flex flex-wrap gap-x-8 gap-y-2 border-t border-slate pt-5 text-[10px] uppercase tracking-wide-cap text-mist">
         {sourceLabel && (
           <span>
-            Source: <strong className="text-slate-500">{sourceLabel}</strong>
+            Source · <span className="text-stone">{sourceLabel}</span>
           </span>
         )}
         {details?.source && <span>{details.source}</span>}
         {result.processingTime && <span>Answered in {result.processingTime}</span>}
-        {result.requestId && <span>Request {result.requestId}</span>}
+        {result.requestId && <span>Ref {result.requestId}</span>}
       </footer>
     </article>
   );

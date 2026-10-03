@@ -1,83 +1,137 @@
+import { motion, useReducedMotion } from 'framer-motion';
+
 import CheckForm from '../components/CheckForm';
+import { Reveal } from '../motion/primitives';
+import { EASE } from '../motion/tokens';
 import { PETS } from '../pets';
 
-const HIGHLIGHTS = [
+const HERO_LINES = ['Can my pet', 'eat this?'];
+
+const STEPS = [
   {
-    emoji: '🗄️',
-    title: 'Vet data first',
-    body: 'Answers come from a merged veterinary database — no AI call, no waiting, no cost.',
+    title: 'Veterinary data first',
+    body: 'Every check begins with curated, species-specific safety records — instant, free, and the most trustworthy answer we have.',
   },
   {
-    emoji: '🤖',
-    title: 'AI only as a fallback',
-    body: 'Unknown foods fall through to Gemini, clearly labelled as AI analysis.',
+    title: 'Then the open databases',
+    body: 'Foods we have never seen are matched against Open Pet Food Facts before anything else is allowed to guess.',
   },
   {
-    emoji: '🧾',
-    title: 'Sources shown',
-    body: 'Every verdict tells you where it came from and how long it took.',
+    title: 'AI, clearly labelled',
+    body: 'Only as a last resort does the model weigh in — and the verdict always tells you it was AI-assisted.',
   },
 ];
 
 export default function HomePage() {
+  const reduce = useReducedMotion();
+
   return (
-    <div className="space-y-12">
-      <section className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-          Can my pet eat this?
-        </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-base text-slate-600 sm:text-lg">
-          Instant answers from veterinary-sourced safety data for 10 species — with
-          an AI fallback for the unusual stuff.
-        </p>
-      </section>
-
-      <section aria-label="Food safety checker">
-        <CheckForm />
-      </section>
-
-      <section aria-labelledby="supported-pets">
-        <h2
-          id="supported-pets"
-          className="text-center text-sm font-semibold uppercase tracking-wide text-slate-500"
+    <div>
+      {/* ---- Hero ---------------------------------------------------------- */}
+      <section className="mx-auto max-w-[1600px] px-5 pt-16 pb-24 sm:px-10 sm:pt-24 lg:pt-32">
+        <motion.p
+          className="eyebrow"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, ease: EASE }}
         >
-          Supported pets
-        </h2>
-        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {PETS.map((pet) => (
-            <li
-              key={pet.key}
-              className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm"
-            >
-              <div className="text-2xl" aria-hidden="true">
-                {pet.emoji}
-              </div>
-              <div className="mt-1 text-sm font-semibold text-slate-800">
-                {pet.label}
-              </div>
-              <div className="mt-0.5 text-xs text-slate-500">{pet.blurb}</div>
-            </li>
+          Veterinary food safety · Ten species
+        </motion.p>
+
+        <h1 className="mt-8 font-display text-[clamp(3rem,10vw,8.5rem)] font-light leading-[0.9] tracking-[-0.02em] text-ink">
+          {HERO_LINES.map((line, index) => (
+            <span key={line} className="block overflow-hidden pb-1">
+              <motion.span
+                className="block"
+                initial={reduce ? { opacity: 0 } : { y: '110%' }}
+                animate={reduce ? { opacity: 1 } : { y: 0 }}
+                transition={{ duration: 1.1, ease: EASE, delay: 0.15 + index * 0.12 }}
+              >
+                {line}
+              </motion.span>
+            </span>
           ))}
-        </ul>
+        </h1>
+
+        <div className="mt-12 grid gap-8 sm:grid-cols-[1fr_auto] sm:items-end">
+          <motion.p
+            className="max-w-xl text-base leading-relaxed text-stone"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: EASE, delay: 0.55 }}
+          >
+            Instant answers from veterinary-sourced safety data, with an AI fallback for
+            the unusual stuff. No sign-up, no guessing — just the source, stated plainly.
+          </motion.p>
+
+          <motion.a
+            href="#checker"
+            className="link-line text-[12px] uppercase tracking-wide-cap text-charcoal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.9, ease: EASE, delay: 0.7 }}
+          >
+            Check a food ↓
+          </motion.a>
+        </div>
       </section>
 
-      <section aria-label="How PetPal works" className="grid gap-4 sm:grid-cols-3">
-        {HIGHLIGHTS.map((item) => (
-          <div
-            key={item.title}
-            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-          >
-            <div className="text-xl" aria-hidden="true">
-              {item.emoji}
-            </div>
-            <h3 className="mt-2 text-sm font-semibold text-slate-900">
-              {item.title}
-            </h3>
-            <p className="mt-1 text-sm leading-relaxed text-slate-600">
-              {item.body}
-            </p>
+      {/* ---- Checker ------------------------------------------------------- */}
+      <section id="checker" className="border-t border-slate">
+        <div className="mx-auto max-w-3xl px-5 py-24 sm:px-10">
+          <Reveal>
+            <CheckForm />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ---- Method (dark contrast band) ----------------------------------- */}
+      <section className="bg-carbon text-parchment">
+        <div className="mx-auto max-w-[1600px] px-5 py-28 sm:px-10">
+          <Reveal>
+            <p className="eyebrow text-sage">The method</p>
+          </Reveal>
+          <div className="mt-14 grid gap-12 sm:grid-cols-3">
+            {STEPS.map((step, index) => (
+              <Reveal key={step.title} delay={index * 0.1}>
+                <div className="border-t border-parchment/25 pt-6">
+                  <p className="font-display text-4xl font-light text-parchment/35">
+                    {String(index + 1).padStart(2, '0')}
+                  </p>
+                  <h3 className="mt-6 font-display text-2xl tracking-tight">{step.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-parchment/70">{step.body}</p>
+                </div>
+              </Reveal>
+            ))}
           </div>
-        ))}
+        </div>
+      </section>
+
+      {/* ---- Species index ------------------------------------------------- */}
+      <section className="mx-auto max-w-[1600px] px-5 py-28 sm:px-10">
+        <Reveal>
+          <p className="eyebrow">Species covered</p>
+        </Reveal>
+        <Reveal delay={0.05}>
+          <h2 className="mt-5 font-display text-4xl font-light tracking-tight text-ink sm:text-5xl">
+            Ten species, one answer.
+          </h2>
+        </Reveal>
+
+        <div className="mt-16 border-t border-slate">
+          {PETS.map((pet) => (
+            <div
+              key={pet.key}
+              className="group grid grid-cols-[2rem_1fr] items-baseline gap-x-6 gap-y-1 border-b border-slate py-5 transition-colors duration-500 hover:bg-alabaster sm:grid-cols-[3rem_11rem_1fr] sm:px-2"
+            >
+              <span className="text-lg" aria-hidden="true">
+                {pet.emoji}
+              </span>
+              <span className="font-display text-xl text-ink">{pet.label}</span>
+              <span className="col-span-2 text-sm text-stone sm:col-span-1">{pet.blurb}</span>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );

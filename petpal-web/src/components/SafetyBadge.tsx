@@ -2,11 +2,15 @@ import { SAFETY_META } from '../pets';
 import type { SafetyLevel } from '../types';
 
 const SIZE_CLASSES = {
-  sm: 'px-2 py-0.5 text-xs',
-  md: 'px-3 py-1 text-sm',
-  lg: 'px-4 py-2 text-lg',
+  sm: 'px-2.5 py-0.5 text-[10px]',
+  md: 'px-3 py-1 text-[11px]',
+  lg: 'px-4 py-1.5 text-xs',
 } as const;
 
+/**
+ * A verdict tag: a word, a hairline border, no fill. Deliberately not a pill —
+ * the whole system uses square corners.
+ */
 export default function SafetyBadge({
   safety,
   size = 'md',
@@ -18,9 +22,8 @@ export default function SafetyBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border font-semibold ${meta.classes} ${SIZE_CLASSES[size]}`}
+      className={`inline-flex items-center border font-medium uppercase tracking-wide-cap ${meta.text} ${meta.border} ${SIZE_CLASSES[size]}`}
     >
-      <span aria-hidden="true">{meta.emoji}</span>
       {meta.label}
     </span>
   );

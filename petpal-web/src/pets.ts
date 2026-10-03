@@ -31,38 +31,46 @@ export const PET_BY_KEY: Record<string, PetMeta> = Object.fromEntries(
   PETS.map((pet) => [pet.key, pet]),
 );
 
+/**
+ * One token per verdict. Shapes and colour are intentionally austere: a thin
+ * rule and a word, no fills or pastel chips.
+ */
 export const SAFETY_META: Record<
   SafetyLevel,
-  { label: string; emoji: string; classes: string; border: string }
+  { label: string; gloss: string; text: string; border: string; rule: string }
 > = {
   safe: {
     label: 'Safe',
-    emoji: '✅',
-    classes: 'bg-green-100 text-green-800 border-green-300',
-    border: 'border-green-500',
+    gloss: 'Generally fine in normal amounts.',
+    text: 'text-safe',
+    border: 'border-safe',
+    rule: 'bg-safe',
   },
   caution: {
     label: 'Caution',
-    emoji: '⚠️',
-    classes: 'bg-amber-100 text-amber-800 border-amber-300',
-    border: 'border-amber-500',
+    gloss: 'Moderation only — check with your vet.',
+    text: 'text-caution',
+    border: 'border-caution',
+    rule: 'bg-caution',
   },
   unsafe: {
     label: 'Unsafe',
-    emoji: '❌',
-    classes: 'bg-red-100 text-red-800 border-red-300',
-    border: 'border-red-500',
+    gloss: 'Do not feed. Contact a vet if consumed.',
+    text: 'text-unsafe',
+    border: 'border-unsafe',
+    rule: 'bg-unsafe',
   },
   unknown: {
     label: 'Unknown',
-    emoji: '❓',
-    classes: 'bg-slate-100 text-slate-700 border-slate-300',
-    border: 'border-slate-400',
+    gloss: 'We have no data — consult a veterinarian.',
+    text: 'text-unknown',
+    border: 'border-unknown',
+    rule: 'bg-unknown',
   },
 };
 
-export const CATEGORY_META: Record<FoodCategory, { label: string; emoji: string }> = {
-  safe: { label: 'Safe', emoji: '✅' },
-  caution: { label: 'Caution', emoji: '⚠️' },
-  unsafe: { label: 'Unsafe', emoji: '❌' },
+export const CATEGORY_META: Record<FoodCategory, { label: string; gloss: string }> = {
+  safe: { label: 'Safe', gloss: 'Generally fine in normal amounts.' },
+  caution: { label: 'Caution', gloss: 'Moderation only.' },
+  unsafe: { label: 'Unsafe', gloss: 'Do not feed.' },
 };
