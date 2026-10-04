@@ -15,6 +15,12 @@ export function presentedKey(req: Request): ApiKey | undefined {
  * attaches the key for {@link trackUsage}.
  */
 export function requireApiKey(req: Request, res: Response, next: NextFunction): void {
+  // Already authenticated by an outer mount (e.g. /api/v1) — don't re-check.
+  if (presentedKey(req)) {
+    next();
+    return;
+  }
+
   const header = (req.header('authorization') ?? '').trim();
   const match = /^Bearer\s+(.+)$/i.exec(header);
 

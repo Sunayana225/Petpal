@@ -2,6 +2,7 @@ import { Router, NextFunction, Request, Response } from 'express';
 import { body, query, validationResult } from 'express-validator';
 
 import { asyncHandler } from '../middleware/errorHandler';
+import { requireApiKey } from '../middleware/apiKeyAuth';
 import { FoodSafetyService } from '../services/foodSafetyService';
 import { logger } from '../utils/logger';
 
@@ -127,18 +128,23 @@ function listEndpoint(category: Category) {
   });
 }
 
+/**
+ * Bulk / dataset endpoints. These expose the whole database, so they require an
+ * API key *even on the public mount* — only `/check` stays open for the apps.
+ */
 /** GET /api/food-safety/safe/:pet */
-router.get('/safe/:pet', listEndpoint('safe'));
+router.get('/safe/:pet', requireApiKey, listEndpoint('safe'));
 
 /** GET /api/food-safety/caution/:pet */
-router.get('/caution/:pet', listEndpoint('caution'));
+router.get('/caution/:pet', requireApiKey, listEndpoint('caution'));
 
 /** GET /api/food-safety/unsafe/:pet */
-router.get('/unsafe/:pet', listEndpoint('unsafe'));
+router.get('/unsafe/:pet', requireApiKey, listEndpoint('unsafe'));
 
 /** GET /api/food-safety/pets */
 router.get(
   '/pets',
+  requireApiKey,
   asyncHandler(async (_req: Request, res: Response) => {
     const supportedPets = foodSafetyService.getSupportedPets();
     res.json({ supportedPets, count: supportedPets.length });
@@ -148,6 +154,7 @@ router.get(
 /** GET /api/food-safety/search?q=apple[&pet=dog] */
 router.get(
   '/search',
+  requireApiKey,
   [
     query('q')
       .trim()
@@ -168,6 +175,7 @@ router.get(
 /** GET /api/food-safety/stats — database coverage per species. */
 router.get(
   '/stats',
+  requireApiKey,
   asyncHandler(async (_req: Request, res: Response) => {
     res.json({
       stats: foodSafetyService.getStats(),

@@ -2,15 +2,21 @@ import request from 'supertest';
 import type { Express } from 'express';
 
 import { createApp } from '../app';
+import { userRepository } from '../repositories/userRepository';
+import { apiKeyService } from '../services/apiKeyService';
 import { API_VERSION } from '../version';
 
 describe('PetPal API Tests', () => {
   let app: Express;
+  let key: string;
 
   beforeAll(() => {
     // The *real* application — helmet, CORS, rate limiting, 404 and the global
     // error handler are all under test, not a hand-rolled stand-in.
     app = createApp();
+    // Bulk/dataset endpoints require an API key now, even on the public mount.
+    const user = userRepository().upsertFromOAuth({ provider: 'test', providerUserId: 'app-suite' });
+    key = apiKeyService().create(user.id, 'app-suite key').rawKey;
   });
 
   describe('Health Check', () => {
@@ -32,6 +38,7 @@ describe('PetPal API Tests', () => {
       test('should return supported pets list', async () => {
         const response = await request(app)
           .get('/api/food-safety/pets')
+          .set('Authorization', `Bearer ${key}`)
           .expect(200);
 
         expect(response.body).toHaveProperty('supportedPets');
@@ -142,6 +149,7 @@ describe('PetPal API Tests', () => {
       test('should return safe foods for dogs', async () => {
         const response = await request(app)
           .get('/api/food-safety/safe/dog')
+          .set('Authorization', `Bearer ${key}`)
           .expect(200);
 
         expect(response.body).toHaveProperty('pet', 'dog');
@@ -153,6 +161,7 @@ describe('PetPal API Tests', () => {
       test('should return safe foods for cats', async () => {
         const response = await request(app)
           .get('/api/food-safety/safe/cat')
+          .set('Authorization', `Bearer ${key}`)
           .expect(200);
 
         expect(response.body).toHaveProperty('pet', 'cat');
@@ -165,6 +174,7 @@ describe('PetPal API Tests', () => {
       test('should return unsafe foods for dogs', async () => {
         const response = await request(app)
           .get('/api/food-safety/unsafe/dog')
+          .set('Authorization', `Bearer ${key}`)
           .expect(200);
 
         expect(response.body).toHaveProperty('pet', 'dog');

@@ -66,7 +66,8 @@ Sign in with GitHub or Google, then create keys in the console (`/login` →
   hash is stored. Keys can be enabled/disabled, given a rolling quota, and revoked.
 - **Keyed API** — `/api/v1/food-safety/*` is the *same* handlers behind
   `Authorization: Bearer sk-…`, with a per-key quota (`429` when exceeded) and
-  usage logging. The public `/api/food-safety/*` stays open for the shipped apps.
+  usage logging. On the public mount only `/check` is open; the bulk/dataset
+  endpoints (`search`, `pets`, `stats`, the category lists) require a key there too.
 - **Usage** — one `usage_events` row per keyed call; `GET /api/me/usage` returns
   totals, per-day counts and recent calls.
 
@@ -92,8 +93,9 @@ production unless you deliberately set `DEV_AUTH=1`.
 
 Ten: **dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes,
 chickens.** The live source of truth is `GET /api/food-safety/pets`; record counts
-come from `GET /api/food-safety/stats`. The shipped dataset is a few hundred merged
-records — see `/stats` rather than trusting a number in prose.
+come from `GET /api/food-safety/stats` (both require an API key). The shipped
+dataset is a few hundred merged records — see `/stats` rather than trusting a
+number in prose.
 
 ## Repository layout
 
@@ -109,14 +111,14 @@ petpal-backend/   Express + TypeScript API
   data/foodSafety.json  curated dataset
 
 petpal-web/       React 18 + Vite + Tailwind v4 client
-  src/pages/            Home (checker), Browse, Docs
+  src/pages/            Home (checker), Docs
   src/components/       CheckForm, ResultCard, Header, Footer, …
   src/motion/           motion tokens and primitives
   src/lib/              api transport, attribution, analytics
 
 petpal-mobile/    Expo + React Native client (TypeScript)
   App.tsx               bottom-tab navigator
-  src/screens/          Checker, Browse, Info
+  src/screens/          Checker, Info
   src/components/       Button, SafetyBadge, ResultView, Reveal
   src/api.ts            API client (EXPO_PUBLIC_API_URL)
 ```
@@ -196,13 +198,15 @@ Base URL: `http://localhost:3001/api` (or the deployed host).
 | `GET` | `/` | Service info and endpoint index |
 | `GET` | `/api/health` | Liveness + dependency status |
 | `GET` | `/api/info` | Version, supported pets, endpoints |
-| `POST` | `/api/food-safety/check` | Check a food — body `{ pet, food }` |
-| `GET` | `/api/food-safety/check?pet=dog&food=chocolate` | Same check, linkable |
-| `GET` | `/api/food-safety/search?q=apple[&pet=dog]` | Type-ahead across species |
-| `GET` | `/api/food-safety/pets` | Supported species |
-| `GET` | `/api/food-safety/stats` | Record counts per species |
-| `GET` | `/api/food-safety/{safe\|caution\|unsafe}/:pet` | Category lists |
+| `POST` | `/api/food-safety/check` | Check a food — body `{ pet, food }` (public) |
+| `GET` | `/api/food-safety/check?pet=dog&food=chocolate` | Same check, linkable (public) |
+| `GET` | `/api/food-safety/search?q=apple[&pet=dog]` | Type-ahead across species — key required |
+| `GET` | `/api/food-safety/pets` | Supported species — key required |
+| `GET` | `/api/food-safety/stats` | Record counts per species — key required |
+| `GET` | `/api/food-safety/{safe\|caution\|unsafe}/:pet` | Category lists — key required |
 | `GET` | `/api/monitoring/status` \| `/metrics` | Process health and metrics |
+
+Only `/check` is public. Everything else needs `Authorization: Bearer sk-…`.
 
 ```bash
 curl -X POST http://localhost:3001/api/food-safety/check \
