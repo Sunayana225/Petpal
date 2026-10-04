@@ -5,7 +5,7 @@
 ⚠️ **IMPORTANT**: An API key was previously exposed in this repository's documentation files and has been removed.
 
 ### If you downloaded/cloned this repository before this commit:
-1. **DO NOT USE** the API key `AIzaSyCUInx2BgrBAUjuAFAC8lVqZDsxsD2YYSM` - it has been revoked
+1. **DO NOT USE** the previously exposed key (starts `AIzaSyCUInx2…`). It has been revoked. If you ever find a live key in an old clone, rotate it immediately.
 2. Generate your own API keys from the respective services
 
 ### Security Best Practices Implemented:
