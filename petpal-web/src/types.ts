@@ -100,6 +100,8 @@ export interface ApiKey {
   createdAt: string;
   lastUsedAt: string | null;
   revokedAt: string | null;
+  /** Present on list responses: live quota usage for this key. */
+  usage?: { limit: number | null; used: number; window: QuotaWindow; remaining: number | null };
 }
 
 export interface CreatedApiKey {

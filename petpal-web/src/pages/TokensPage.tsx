@@ -7,8 +7,13 @@ import { consoleApi } from '../services/consoleApi';
 import type { ApiKey } from '../types';
 
 function quotaLabel(key: ApiKey): string {
-  if (key.quotaLimit === null) return 'Unlimited';
-  return `${key.quotaLimit} / ${key.quotaWindow}`;
+  const used = key.usage?.used;
+  const limit = key.usage?.limit ?? key.quotaLimit;
+
+  if (used !== undefined) {
+    return `${used} used · ${limit === null ? 'unlimited' : `${limit} ${key.quotaWindow}`}`;
+  }
+  return limit === null ? 'Unlimited' : `${limit} / ${key.quotaWindow}`;
 }
 
 function dateLabel(iso: string | null): string {
@@ -83,8 +88,9 @@ export default function TokensPage() {
 
       <Reveal delay={0.1}>
         <p className="mt-6 max-w-2xl text-sm leading-relaxed text-stone">
-          Tokens authenticate the keyed API. We store only a hash — the full key is shown
-          once, when you create it.
+          Tokens authenticate the keyed API. <strong className="text-charcoal">A key is shown
+          once, when you create it, and never again</strong> — we store only a hash, so copy it
+          somewhere safe. The <em>Quota</em> column shows live calls used this window.
         </p>
       </Reveal>
 

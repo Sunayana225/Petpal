@@ -26,10 +26,42 @@ function quotaFrom(bodyValue: unknown): number | null | undefined {
   return Number(bodyValue);
 }
 
-/** GET /api/me/keys — the caller's active keys. */
+/** GET /api/me/keys — the caller's active keys, each with its current usage. */
 router.get('/keys', (req: Request, res: Response) => {
   const user = currentUser(req)!;
-  res.json({ keys: apiKeyService().list(user.id) });
+  const service = apiKeyService();
+
+  const keys = service.list(user.id).map((key) => ({
+    ...key,
+    // Live metrics so the console can show calls used / remaining per key.
+    usage: service.quotaStatus(key),
+  }));
+
+  res.json({ keys });
+});
+
+/** GET /api/me/keys/:id/usage — detailed usage for one key. */
+router.get('/keys/:id/usage', (req: Request, res: Response) => {
+  const user = currentUser(req)!;
+  const key = apiKeyService()
+    .list(user.id)
+    .find((candidate) => candidate.id === String(req.params.id));
+
+  if (!key) {
+    res.status(404).json({ error: 'Not Found', message: 'No such key.' });
+    return;
+  }
+
+  const since = typeof req.query.since === 'string' ? req.query.since : windowStartIso('month');
+  const usage = usageRepository();
+
+  res.json({
+    key,
+    quota: apiKeyService().quotaStatus(key),
+    total: usage.countSince(key.id, new Date(0).toISOString()),
+    daily: usage.dailyForKey(key.id, since),
+    recent: usage.recentForKey(key.id, 50),
+  });
 });
 
 /** POST /api/me/keys — create a key; the raw value is returned once. */

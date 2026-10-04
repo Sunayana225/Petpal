@@ -87,6 +87,19 @@ export class UsageRepository {
     return rows.map(toEvent);
   }
 
+  /** Per-day counts for a single key. */
+  dailyForKey(keyId: string, sinceIso: string): DailyCount[] {
+    return this.db
+      .prepare(
+        `SELECT substr(ts, 1, 10) AS day, COUNT(*) AS count
+           FROM usage_events
+          WHERE key_id = ? AND ts >= ?
+          GROUP BY day
+          ORDER BY day`,
+      )
+      .all(keyId, sinceIso) as DailyCount[];
+  }
+
   /** Per-day counts across all of a user's keys. */
   dailyForUser(userId: string, sinceIso: string): DailyCount[] {
     return this.db

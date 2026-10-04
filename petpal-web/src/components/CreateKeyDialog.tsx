@@ -89,9 +89,17 @@ export default function CreateKeyDialog({ open, onClose, onCreated }: Props) {
               <>
                 <p className="eyebrow">Key created</p>
                 <h2 className="mt-3 font-display text-2xl text-ink">Copy it now.</h2>
-                <p className="mt-3 text-sm leading-relaxed text-stone">
-                  This is the only time the full key is shown. Store it somewhere safe.
-                </p>
+
+                <div className="mt-5 border-l-2 border-unsafe pl-4">
+                  <p className="text-sm font-semibold text-unsafe">
+                    This key won’t be visible again.
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-stone">
+                    For security we store only a hash, so we can never show it again. Copy it
+                    now and keep it safe — if you lose it, revoke it and create a new one.
+                  </p>
+                </div>
+
                 <code className="mt-6 block break-all border border-slate bg-alabaster p-4 font-mono text-xs text-charcoal">
                   {created.rawKey}
                 </code>
