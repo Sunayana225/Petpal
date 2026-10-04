@@ -1,3 +1,4 @@
+import { getGeminiKeySync } from './lib/geminiKey';
 import type { CategoryListResponse, FoodCategory, FoodSafetyResult } from './types';
 
 /**
@@ -27,14 +28,20 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
   try {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(init.headers as Record<string, string> | undefined),
+    };
+
+    // Attach the visitor's own Gemini key, if they set one.
+    const geminiKey = getGeminiKeySync();
+    if (geminiKey) headers['x-gemini-key'] = geminiKey;
+
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
       signal: controller.signal,
-      headers: {
-        Accept: 'application/json',
-        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-        ...init.headers,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -72,4 +79,12 @@ export const api = {
   getSafeFoods: (pet: string) => listCategory('safe', pet),
   getCautionFoods: (pet: string) => listCategory('caution', pet),
   getUnsafeFoods: (pet: string) => listCategory('unsafe', pet),
+
+  /** Validate a user-supplied Gemini key against Google (read-only). */
+  validateGeminiKey(apiKey: string): Promise<{ valid: boolean }> {
+    return request<{ valid: boolean }>('/gemini/validate', {
+      method: 'POST',
+      body: JSON.stringify({ apiKey }),
+    });
+  },
 };
