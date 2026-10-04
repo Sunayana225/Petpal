@@ -165,5 +165,7 @@ temp/
 /petpal-backend/t_*.json
 /petpal-backend/t_done.txt
 
-# Runtime AI review queue (operational data, not source)
-/petpal-backend/data/learned.json
+# Runtime SQLite database (operational data, not source)
+/petpal-backend/data/petpal.db
+/petpal-backend/data/petpal.db-wal
+/petpal-backend/data/petpal.db-shm

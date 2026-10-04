@@ -9,7 +9,6 @@ import {
   SUPPORTED_PET_KEYS,
   type PetKey,
 } from '../utils/normalization';
-import type { LearnedRecord } from './aiLearningStore';
 
 /** A food record after it has been normalised and filed under a pet key. */
 export interface IndexedFood extends FoodItem {
@@ -37,16 +36,6 @@ function loadLegacyDatabase(): LegacyDatabase {
   }
 
   return readJsonFile<LegacyDatabase>(databasePath, {});
-}
-
-/**
- * AI answers a human has promoted from the review queue. These are the least
- * authoritative source, so they are merged last and only fill gaps.
- */
-function loadLearnedRecords(): LearnedRecord[] {
-  const learnedPath = findDataFile('learned.json');
-  const records = readJsonFile<LearnedRecord[]>(learnedPath, []);
-  return Array.isArray(records) ? records.filter((record) => record.status === 'approved') : [];
 }
 
 /**
@@ -99,30 +88,6 @@ export class FoodSafetyRepository {
       const petKey = normalizePetKey(pet);
       if (!petKey) continue;
       this.ingestCategories(petKey, categories, 'ManyPets');
-    }
-
-    // 3. Approved AI answers — least authoritative, merged last so they only
-    //    fill gaps or agree with the curated data (the more cautious verdict
-    //    still wins on conflict via `insert`).
-    for (const record of loadLearnedRecords()) {
-      const petKey = normalizePetKey(record.pet);
-      if (!petKey || !record.food) continue;
-      this.insert(
-        petKey,
-        record.safety,
-        {
-          food: record.food,
-          safety: record.safety,
-          description: record.description ?? '',
-          symptoms: record.symptoms,
-          benefits: record.benefits,
-          alternatives: record.alternatives,
-          preparation: record.preparation,
-          recommendation: record.recommendation,
-          severity: record.severity,
-        },
-        'AI (approved)',
-      );
     }
 
     this.rebuildLookup();

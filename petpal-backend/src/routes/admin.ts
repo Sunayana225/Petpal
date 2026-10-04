@@ -1,41 +1,44 @@
 import { NextFunction, Request, Response, Router } from 'express';
 
-import { aiLearningStore, type ReviewStatus } from '../services/aiLearningStore';
-import { foodSafetyRepository } from '../services/foodSafetyRepository';
+import type { AnswerStatus } from '../repositories/aiAnswerRepository';
+import { answerCache } from '../services/answerCache';
 
 const router = Router();
 
-const STATUSES: ReviewStatus[] = ['pending', 'approved', 'rejected'];
+const STATUSES: AnswerStatus[] = ['pending', 'approved', 'rejected'];
 
 /**
  * Guard for the review queue.
  *
  * Mutating the safety dataset is an operational action, so it must never be
- * public. Without `ADMIN_TOKEN` configured, every request is refused — a
- * missing secret fails closed rather than open.
+ * public. A logged-in admin (once auth lands) or the `ADMIN_TOKEN` is accepted;
+ * with neither configured, every request is refused — it fails closed.
  */
 function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   const expected = process.env.ADMIN_TOKEN;
   const provided = req.header('x-admin-token');
+  const sessionUser = (req as Request & { user?: { role?: string } }).user;
+  const isAdminSession = sessionUser?.role === 'admin';
 
-  if (!expected || provided !== expected) {
-    res.status(401).json({
-      error: 'Unauthorized',
-      message: 'A valid admin token is required (send it as x-admin-token).',
-    });
+  if (isAdminSession || (expected && provided === expected)) {
+    next();
     return;
   }
-  next();
+
+  res.status(401).json({
+    error: 'Unauthorized',
+    message: 'A valid admin token or admin session is required.',
+  });
 }
 
 /**
  * GET /api/admin/queue[?status=pending]
- * List captured AI answers, newest state first, with queue counts.
+ * List captured remote answers with queue counts.
  */
 router.get('/queue', requireAdmin, (req: Request, res: Response) => {
   const status = typeof req.query.status === 'string' ? req.query.status : undefined;
 
-  if (status && !STATUSES.includes(status as ReviewStatus)) {
+  if (status && !STATUSES.includes(status as AnswerStatus)) {
     res.status(400).json({
       error: 'Bad Request',
       message: `status must be one of: ${STATUSES.join(', ')}`,
@@ -44,34 +47,32 @@ router.get('/queue', requireAdmin, (req: Request, res: Response) => {
   }
 
   res.json({
-    stats: aiLearningStore.stats(),
-    records: aiLearningStore.list(status as ReviewStatus | undefined),
+    stats: answerCache.stats(),
+    records: answerCache.list(status as AnswerStatus | undefined),
   });
 });
 
 /**
  * POST /api/admin/queue/:id/approve
- * Promote a pending AI answer into the live dataset. Rebuilds the in-memory
- * index so the change takes effect without a restart.
+ * Make a captured answer permanent (it stops expiring and is served to everyone).
  */
 router.post('/queue/:id/approve', requireAdmin, (req: Request, res: Response) => {
-  const record = aiLearningStore.approve(String(req.params.id));
+  const record = answerCache.approve(String(req.params.id));
 
   if (!record) {
     res.status(404).json({ error: 'Not Found', message: 'No such queue record.' });
     return;
   }
 
-  foodSafetyRepository.rebuild();
   res.json({ record });
 });
 
 /**
  * POST /api/admin/queue/:id/reject
- * Discard a captured AI answer so it never reaches the dataset.
+ * Discard a captured answer so it is never served again.
  */
 router.post('/queue/:id/reject', requireAdmin, (req: Request, res: Response) => {
-  const record = aiLearningStore.reject(String(req.params.id));
+  const record = answerCache.reject(String(req.params.id));
 
   if (!record) {
     res.status(404).json({ error: 'Not Found', message: 'No such queue record.' });

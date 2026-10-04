@@ -1,7 +1,7 @@
 import type { FoodItem, FoodSafetyResult, SafetyLevel } from '../types/foodSafety';
 import { normalizeFoodKey, normalizePetKey, type PetKey } from '../utils/normalization';
 import { TTL, TtlCache } from '../utils/cache';
-import { aiLearningStore, type LearningSink } from './aiLearningStore';
+import { answerCache, type AnswerStore } from './answerCache';
 import { type AnswerSource, defaultAnswerSources } from './answerSources';
 import { FoodSafetyRepository, foodSafetyRepository, type IndexedFood } from './foodSafetyRepository';
 
@@ -57,7 +57,7 @@ export class FoodSafetyService {
   constructor(
     private readonly repository: FoodSafetyRepository = foodSafetyRepository,
     private readonly sources: AnswerSource[] = defaultAnswerSources(),
-    private readonly learning: LearningSink | undefined = aiLearningStore,
+    private readonly durable: AnswerStore | undefined = answerCache,
   ) {}
 
   getSupportedPets(): string[] {
@@ -115,13 +115,17 @@ export class FoodSafetyService {
       };
     }
 
-    // 3. Remote resolution, memoised. Definitive verdicts stick around longer
-    //    than guesses so we don't re-burn credits on the same question.
+    // 3. Remote resolution, memoised in-process *and* durably. The durable cache
+    //    is checked first, so a food resolved before — even in a previous process
+    //    — never reaches Gemini again.
     const cacheKey = `${petKey}|${foodKey}`;
     const { value } = await this.answerCache.getOrSet(
       cacheKey,
       (result) => (result.safety === 'unknown' ? TTL.unknown : TTL.ai),
-      () => this.resolveRemotely(petKey, pet, food),
+      () => {
+        const stored = this.durable?.getServable(petKey, foodKey);
+        return stored ? Promise.resolve(stored) : this.resolveRemotely(petKey, pet, food);
+      },
     );
 
     return { ...value, pet, food };
@@ -141,21 +145,8 @@ export class FoodSafetyService {
       try {
         const result = await source.resolve(petKey, pet, food);
         if (result) {
-          // AI answers are captured for human review — never trusted silently.
-          if (source.source === 'ai' && result.safety !== 'unknown') {
-            this.learning?.recordAnswer({
-              pet: petKey,
-              food: result.food,
-              safety: result.safety,
-              description: result.details?.description,
-              symptoms: result.details?.symptoms,
-              benefits: result.details?.benefits,
-              alternatives: result.details?.alternatives,
-              preparation: result.details?.preparation,
-              recommendation: result.details?.recommendation,
-              severity: result.details?.severity,
-            });
-          }
+          // Persist so the same question never spends a second remote call.
+          this.durable?.recordAnswer(petKey, result);
           return result;
         }
       } catch (error) {
@@ -163,13 +154,16 @@ export class FoodSafetyService {
       }
     }
 
-    return {
+    const fallback: FoodSafetyResult = {
       pet,
       food,
       safety: 'unknown',
       message: buildMessage('unknown', food, pet),
       source: 'none',
     };
+    // Remember the dead end too — re-asking Gemini won't change the answer.
+    this.durable?.recordAnswer(petKey, fallback);
+    return fallback;
   }
 
   private fromDatabase(record: IndexedFood, pet: string, food: string): FoodSafetyResult {

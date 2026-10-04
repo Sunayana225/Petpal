@@ -68,6 +68,7 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_usage_key_ts ON usage_events (key_id, ts);
 
       CREATE TABLE IF NOT EXISTS ai_answers (
+        id         TEXT PRIMARY KEY,
         pet        TEXT NOT NULL,
         food       TEXT NOT NULL,
         safety     TEXT NOT NULL,
@@ -76,7 +77,7 @@ export const MIGRATIONS: Migration[] = [
         status     TEXT NOT NULL DEFAULT 'pending',
         created_at TEXT NOT NULL,
         expires_at INTEGER,
-        PRIMARY KEY (pet, food)
+        UNIQUE (pet, food)
       );
       CREATE INDEX IF NOT EXISTS idx_ai_answers_status ON ai_answers (status);
     `,
