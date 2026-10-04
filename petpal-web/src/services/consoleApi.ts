@@ -11,6 +11,17 @@ export const consoleApi = {
     return requestJson<{ ok: true }>('/auth/logout', { method: 'POST' });
   },
 
+  /**
+   * Development-only sign-in shortcut (the API refuses it in production). Lets
+   * the console be used locally without configuring GitHub/Google OAuth.
+   */
+  devLogin(name?: string): Promise<{ user: AuthUser }> {
+    return requestJson<{ user: AuthUser }>('/auth/dev-login', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  },
+
   listKeys(): Promise<{ keys: ApiKey[] }> {
     return requestJson<{ keys: ApiKey[] }>('/me/keys');
   },

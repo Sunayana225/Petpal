@@ -39,6 +39,26 @@ describe('auth surface', () => {
     await request(app).post('/api/auth/logout').expect(200);
   });
 
+  test('dev-login signs in outside production', async () => {
+    const response = await request(app)
+      .post('/api/auth/dev-login')
+      .send({ name: 'Dev Tester' })
+      .expect(200);
+
+    expect(response.body.user).toHaveProperty('provider', 'dev');
+    expect(response.body.user).toHaveProperty('role', 'user');
+  });
+
+  test('dev-login is refused in production', async () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      await request(app).post('/api/auth/dev-login').send({}).expect(404);
+    } finally {
+      process.env.NODE_ENV = previous;
+    }
+  });
+
   test('admin routes still refuse anonymous callers (no token, no session)', async () => {
     await request(app).get('/api/admin/queue').expect(401);
   });

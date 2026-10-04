@@ -1,22 +1,34 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../lib/auth';
 import { Reveal } from '../motion/primitives';
-import { API_BASE_URL } from '../services/api';
+import { API_BASE_URL, ApiError } from '../services/api';
+import { consoleApi } from '../services/consoleApi';
 
 /**
  * Sign-in for the developer console. GitHub/Google buttons hand off to the API's
  * OAuth endpoints; the session cookie comes back to the app on the callback.
  */
 export default function LoginPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, refresh } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const from = (location.state as { from?: string } | null)?.from ?? '/dashboard';
 
   if (!loading && user) return <Navigate to={from} replace />;
 
   const start = (provider: 'github' | 'google') => {
     window.location.href = `${API_BASE_URL}/auth/${provider}`;
+  };
+
+  const devSignIn = async () => {
+    try {
+      await consoleApi.devLogin('Dev User');
+      await refresh();
+      navigate(from, { replace: true });
+    } catch (error) {
+      window.alert(error instanceof ApiError ? error.message : 'Dev sign-in failed.');
+    }
   };
 
   return (
@@ -51,6 +63,16 @@ export default function LoginPage() {
           >
             Continue with Google
           </button>
+
+          {import.meta.env.DEV && (
+            <button
+              type="button"
+              onClick={devSignIn}
+              className="border border-dashed border-slate px-6 py-3.5 text-[12px] uppercase tracking-wide-cap text-mist transition-colors duration-500 hover:border-forest hover:text-forest"
+            >
+              Continue as dev user (local only)
+            </button>
+          )}
         </div>
       </Reveal>
 

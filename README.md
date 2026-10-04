@@ -81,6 +81,13 @@ The API cannot create these for you:
 
 Set `SESSION_SECRET` and the client ids/secrets (see `.env.example`).
 
+### Trying the console without OAuth (development only)
+
+Key generation requires a signed-in user, so until OAuth is configured use the
+dev shortcut: the web login page shows a **"Continue as dev user (local only)"**
+button in development, backed by `POST /api/auth/dev-login`. It is refused in
+production unless you deliberately set `DEV_AUTH=1`.
+
 ## Supported species
 
 Ten: **dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes,
