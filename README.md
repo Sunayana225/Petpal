@@ -22,6 +22,31 @@ response always labels which layer produced the answer (`source`):
 Common suffixes and spellings are normalised (`"Bell-Peppers!!"` → `"bell peppers"`,
 `apple` ↔ `apples`, `dog` ↔ `puppy`), so lookups do not silently miss.
 
+## AI answers & the review queue
+
+An AI answer is **never trusted silently**. When Gemini produces a real verdict
+for a food the database did not know, the answer is captured as a `pending`
+record in `petpal-backend/data/learned.json` (operational data, git-ignored, and
+persisted across restarts).
+
+A human then approves or rejects it through a token-protected admin API:
+
+```bash
+# List what is waiting (requires ADMIN_TOKEN)
+curl http://localhost:3001/api/admin/queue?status=pending -H "x-admin-token: $ADMIN_TOKEN"
+
+# Promote a record — merged into the live dataset immediately, no restart
+curl -X POST http://localhost:3001/api/admin/queue/<id>/approve -H "x-admin-token: $ADMIN_TOKEN"
+
+# Discard a record so it never reaches the dataset
+curl -X POST http://localhost:3001/api/admin/queue/<id>/reject -H "x-admin-token: $ADMIN_TOKEN"
+```
+
+Approved records join the index as source `AI (approved)` and are the *least*
+authoritative layer, so the more cautious verdict still wins on any conflict.
+Set `ADMIN_TOKEN` in the environment; without it, every `/api/admin/*` request is
+refused (it fails closed).
+
 ## Supported species
 
 Ten: **dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes,
@@ -94,6 +119,7 @@ elsewhere, set `VITE_API_URL`.
 | `PORT` | Server port (default `3001`) |
 | `NODE_ENV` | `development` / `production` / `test` |
 | `GEMINI_API_KEY` | Enables the AI fallback (optional) |
+| `ADMIN_TOKEN` | Token for the `/api/admin/*` review queue; unset disables it |
 | `CORS_ORIGIN` | Comma-separated allowed origins in production |
 | `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX_REQUESTS` | Rate-limit tuning |
 | `TRUST_PROXY` | Set to `1` when behind a proxy without `NODE_ENV=production` |

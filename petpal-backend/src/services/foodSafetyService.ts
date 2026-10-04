@@ -1,6 +1,7 @@
 import type { FoodItem, FoodSafetyResult, SafetyLevel } from '../types/foodSafety';
 import { normalizeFoodKey, normalizePetKey, type PetKey } from '../utils/normalization';
 import { TTL, TtlCache } from '../utils/cache';
+import { aiLearningStore, type LearningSink } from './aiLearningStore';
 import { type AnswerSource, defaultAnswerSources } from './answerSources';
 import { FoodSafetyRepository, foodSafetyRepository, type IndexedFood } from './foodSafetyRepository';
 
@@ -56,6 +57,7 @@ export class FoodSafetyService {
   constructor(
     private readonly repository: FoodSafetyRepository = foodSafetyRepository,
     private readonly sources: AnswerSource[] = defaultAnswerSources(),
+    private readonly learning: LearningSink | undefined = aiLearningStore,
   ) {}
 
   getSupportedPets(): string[] {
@@ -138,7 +140,24 @@ export class FoodSafetyService {
     for (const source of this.sources) {
       try {
         const result = await source.resolve(petKey, pet, food);
-        if (result) return result;
+        if (result) {
+          // AI answers are captured for human review — never trusted silently.
+          if (source.source === 'ai' && result.safety !== 'unknown') {
+            this.learning?.recordAnswer({
+              pet: petKey,
+              food: result.food,
+              safety: result.safety,
+              description: result.details?.description,
+              symptoms: result.details?.symptoms,
+              benefits: result.details?.benefits,
+              alternatives: result.details?.alternatives,
+              preparation: result.details?.preparation,
+              recommendation: result.details?.recommendation,
+              severity: result.details?.severity,
+            });
+          }
+          return result;
+        }
       } catch (error) {
         console.error(`[FoodSafetyService] ${source.source} lookup failed:`, error);
       }

@@ -11,6 +11,7 @@ import {
   rateLimitHandler,
 } from './middleware/errorHandler';
 import { checkFoodSafetyHandler, foodSafetyRouter } from './routes/foodSafety';
+import { adminRouter } from './routes/admin';
 import { monitoringRouter, trackMetrics } from './routes/monitoring';
 import { SUPPORTED_PET_KEYS } from './utils/normalization';
 import { API_VERSION } from './version';
@@ -118,6 +119,7 @@ export function createApp(): Express {
   // ---- Routes -------------------------------------------------------------
   app.use('/api/food-safety', foodSafetyRouter);
   app.use('/api/monitoring', monitoringRouter);
+  app.use('/api/admin', adminRouter);
 
   app.get('/api/health', healthCheck);
 

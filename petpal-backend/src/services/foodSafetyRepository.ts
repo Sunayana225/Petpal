@@ -1,8 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
-
 import { manyPetsFoodSafetyData } from '../data/manyPetsFoodSafetyData';
 import type { FoodItem, SafetyCategory } from '../types/foodSafety';
+import { findDataFile, readJsonFile } from '../utils/dataFiles';
 import {
   SAFETY_RANK,
   foodVariants,
@@ -11,6 +9,7 @@ import {
   SUPPORTED_PET_KEYS,
   type PetKey,
 } from '../utils/normalization';
+import type { LearnedRecord } from './aiLearningStore';
 
 /** A food record after it has been normalised and filed under a pet key. */
 export interface IndexedFood extends FoodItem {
@@ -28,23 +27,8 @@ interface ManyPetsCategoryMap {
 
 const CATEGORIES: SafetyCategory[] = ['unsafe', 'caution', 'safe'];
 
-/**
- * Locate `data/foodSafety.json` from either `src/` (ts-node/jest) or `dist/`
- * (production). Both sit two directories below the package root, but callers
- * sometimes launch Node from a different working directory, so we fall back to
- * `cwd` candidates rather than failing silently with an empty database.
- */
-function resolveDatabasePath(): string | null {
-  const candidates = [
-    path.join(__dirname, '../../data/foodSafety.json'),
-    path.join(process.cwd(), 'data/foodSafety.json'),
-    path.join(process.cwd(), 'petpal-backend/data/foodSafety.json'),
-  ];
-  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
-}
-
 function loadLegacyDatabase(): LegacyDatabase {
-  const databasePath = resolveDatabasePath();
+  const databasePath = findDataFile('foodSafety.json');
   if (!databasePath) {
     console.error(
       '[foodSafetyRepository] data/foodSafety.json not found — falling back to ManyPets data only',
@@ -52,12 +36,17 @@ function loadLegacyDatabase(): LegacyDatabase {
     return {};
   }
 
-  try {
-    return JSON.parse(fs.readFileSync(databasePath, 'utf8')) as LegacyDatabase;
-  } catch (error) {
-    console.error('[foodSafetyRepository] Failed to parse foodSafety.json:', error);
-    return {};
-  }
+  return readJsonFile<LegacyDatabase>(databasePath, {});
+}
+
+/**
+ * AI answers a human has promoted from the review queue. These are the least
+ * authoritative source, so they are merged last and only fill gaps.
+ */
+function loadLearnedRecords(): LearnedRecord[] {
+  const learnedPath = findDataFile('learned.json');
+  const records = readJsonFile<LearnedRecord[]>(learnedPath, []);
+  return Array.isArray(records) ? records.filter((record) => record.status === 'approved') : [];
 }
 
 /**
@@ -110,6 +99,30 @@ export class FoodSafetyRepository {
       const petKey = normalizePetKey(pet);
       if (!petKey) continue;
       this.ingestCategories(petKey, categories, 'ManyPets');
+    }
+
+    // 3. Approved AI answers — least authoritative, merged last so they only
+    //    fill gaps or agree with the curated data (the more cautious verdict
+    //    still wins on conflict via `insert`).
+    for (const record of loadLearnedRecords()) {
+      const petKey = normalizePetKey(record.pet);
+      if (!petKey || !record.food) continue;
+      this.insert(
+        petKey,
+        record.safety,
+        {
+          food: record.food,
+          safety: record.safety,
+          description: record.description ?? '',
+          symptoms: record.symptoms,
+          benefits: record.benefits,
+          alternatives: record.alternatives,
+          preparation: record.preparation,
+          recommendation: record.recommendation,
+          severity: record.severity,
+        },
+        'AI (approved)',
+      );
     }
 
     this.rebuildLookup();

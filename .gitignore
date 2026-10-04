@@ -164,3 +164,6 @@ temp/
 # Local scratch / diagnostics (never commit these)
 /petpal-backend/t_*.json
 /petpal-backend/t_done.txt
+
+# Runtime AI review queue (operational data, not source)
+/petpal-backend/data/learned.json
