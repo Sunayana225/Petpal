@@ -8,7 +8,7 @@ import rateLimit from 'express-rate-limit';
 import { configurePassport, passport } from './auth/passport';
 import { SqliteSessionStore } from './auth/sessionStore';
 import { getDb } from './db/database';
-import { checkOrigin } from './middleware/auth';
+import { checkOrigin, requireAdmin } from './middleware/auth';
 import { requireApiKey, trackUsage } from './middleware/apiKeyAuth';
 import {
   globalErrorHandler,
@@ -87,8 +87,10 @@ export function createApp(): Express {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           scriptSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
+          imgSrc: ["'self'", 'data:'],
+          fontSrc: ["'self'", 'data:'],
           connectSrc: ["'self'", 'https://generativelanguage.googleapis.com'],
+          frameAncestors: ["'none'"],
         },
       },
       crossOriginEmbedderPolicy: false,
@@ -161,7 +163,9 @@ export function createApp(): Express {
   app.use('/api/gemini', geminiRouter);
   app.use('/api/me', meRouter);
   app.use('/api/food-safety', foodSafetyRouter);
-  app.use('/api/monitoring', monitoringRouter);
+  // Metrics and process status disclose internals (pid, versions, env, per-route
+  // counts), so they require admin access. `/api/health` stays public for probes.
+  app.use('/api/monitoring', requireAdmin, monitoringRouter);
   app.use('/api/admin', adminRouter);
 
   // Keyed developer surface: the same handlers, behind an API key, with usage

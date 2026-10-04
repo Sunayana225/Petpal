@@ -204,7 +204,7 @@ Base URL: `http://localhost:3001/api` (or the deployed host).
 | `GET` | `/api/food-safety/pets` | Supported species — key required |
 | `GET` | `/api/food-safety/stats` | Record counts per species — key required |
 | `GET` | `/api/food-safety/{safe\|caution\|unsafe}/:pet` | Category lists — key required |
-| `GET` | `/api/monitoring/status` \| `/metrics` | Process health and metrics |
+| `GET` | `/api/monitoring/status` \| `/metrics` | Process health and metrics — admin only |
 
 Only `/check` is public. Everything else needs `Authorization: Bearer sk-…`.
 
