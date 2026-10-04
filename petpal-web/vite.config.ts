@@ -18,7 +18,10 @@ export default defineConfig({
 
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // Never ship source maps. They hand out the full original source
+    // (file names, comments, internal routes) to anyone who asks for
+    // `<bundle>.js.map`. Upload them privately if you add error tracking.
+    sourcemap: false,
     // Fail the build early if we accidentally bloat the bundle.
     chunkSizeWarningLimit: 600,
   },
