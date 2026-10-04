@@ -68,7 +68,7 @@ const DOC_GROUPS: DocGroup[] = [
   },
   {
     group: 'Food safety — public',
-    note: 'No API key; rate-limited by IP. This is what the web and mobile apps use.',
+    note: 'No API key. Only the single check is public — every bulk/dataset endpoint requires a key.',
     endpoints: [
       {
         method: 'POST',
@@ -123,73 +123,11 @@ const DOC_GROUPS: DocGroup[] = [
   "processingTime": "1ms"
 }`,
       },
-      {
-        method: 'GET',
-        path: '/api/food-safety/search?q=apple&pet=dog',
-        auth: 'public',
-        summary: 'Type-ahead. Omit pet to sweep every species; each result carries its species.',
-        params: [
-          { name: 'q', in: 'query', type: 'string', required: true, description: 'Search text, 1–100 chars.' },
-          { name: 'pet', in: 'query', type: 'string', required: false, description: 'Narrow to one species.' },
-        ],
-        request: `curl "http://localhost:3001/api/food-safety/search?q=apple"`,
-        response: `{
-  "query": "apple",
-  "pet": null,
-  "count": 3,
-  "results": [
-    { "food": "apples", "pet": "dogs", "safety": "safe", "description": "…", "source": "Veterinary database" },
-    { "food": "apple seeds", "pet": "dogs", "safety": "unsafe", "description": "…" }
-  ]
-}`,
-      },
-      {
-        method: 'GET',
-        path: '/api/food-safety/pets',
-        auth: 'public',
-        summary: 'Every supported species. Use this rather than hard-coding the list.',
-        response: `{
-  "supportedPets": ["dogs","cats","rabbits","hamsters","birds","turtles","fish","lizards","snakes","chickens"],
-  "count": 10
-}`,
-      },
-      {
-        method: 'GET',
-        path: '/api/food-safety/stats',
-        auth: 'public',
-        summary: 'Record counts per species and the total coverage.',
-        response: `{
-  "stats": {
-    "dogs":  { "safe": 4854, "caution": 3495, "unsafe": 2912, "total": 11261 },
-    "cats":  { "safe": 4754, "caution": 3555, "unsafe": 2953, "total": 11262 }
-  },
-  "supportedPets": ["dogs","cats","…"],
-  "totalEntries": 30437,
-  "timestamp": "2026-10-04T09:47:14.672Z"
-}`,
-      },
-      {
-        method: 'GET',
-        path: '/api/food-safety/safe/:pet',
-        auth: 'public',
-        summary: 'All safe foods for a species. Swap safe for caution or unsafe.',
-        params: [
-          { name: 'pet', in: 'path', type: 'string', required: true, description: 'Species (aliases accepted).' },
-        ],
-        request: `curl "http://localhost:3001/api/food-safety/safe/rabbits"`,
-        response: `{
-  "pet": "rabbits",
-  "count": 74,
-  "safeFoods": [
-    { "food": "timothy hay", "safety": "safe", "description": "…", "source": "Veterinary database" }
-  ]
-}`,
-      },
     ],
   },
   {
     group: 'Food safety — keyed',
-    note: 'The same handlers behind an API key, with a per-key quota and usage logging. Required header: Authorization: Bearer sk-…',
+    note: 'Require Authorization: Bearer sk-… — both at /api/v1 and on the bulk endpoints of /api/food-safety. Per-key quota and usage logging.',
     endpoints: [
       {
         method: 'GET',
@@ -219,6 +157,74 @@ const DOC_GROUPS: DocGroup[] = [
   "error": "Too Many Requests",
   "message": "API key quota exceeded.",
   "quota": { "limit": 1000, "used": 1000, "window": "day", "remaining": 0 }
+}`,
+      },
+      {
+        method: 'GET',
+        path: '/api/food-safety/search?q=apple&pet=dog',
+        auth: 'Bearer key',
+        summary: 'Type-ahead across the whole dataset. Omit pet to sweep every species.',
+        params: [
+          { name: 'Authorization', in: 'header', type: 'string', required: true, description: 'Bearer sk-… — your API key.' },
+          { name: 'q', in: 'query', type: 'string', required: true, description: 'Search text, 1–100 chars.' },
+          { name: 'pet', in: 'query', type: 'string', required: false, description: 'Narrow to one species.' },
+        ],
+        request: `curl "http://localhost:3001/api/food-safety/search?q=apple" \\
+  -H "Authorization: Bearer sk-your-key"`,
+        response: `{
+  "query": "apple",
+  "pet": null,
+  "count": 3,
+  "results": [
+    { "food": "apples", "pet": "dogs", "safety": "safe", "description": "…" }
+  ]
+}`,
+      },
+      {
+        method: 'GET',
+        path: '/api/food-safety/safe/:pet',
+        auth: 'Bearer key',
+        summary: 'All safe foods for a species. Swap safe for caution or unsafe.',
+        params: [
+          { name: 'Authorization', in: 'header', type: 'string', required: true, description: 'Bearer sk-… — your API key.' },
+          { name: 'pet', in: 'path', type: 'string', required: true, description: 'Species (aliases accepted).' },
+        ],
+        request: `curl "http://localhost:3001/api/food-safety/safe/rabbits" \\
+  -H "Authorization: Bearer sk-your-key"`,
+        response: `{
+  "pet": "rabbits",
+  "count": 74,
+  "safeFoods": [
+    { "food": "timothy hay", "safety": "safe", "description": "…" }
+  ]
+}`,
+      },
+      {
+        method: 'GET',
+        path: '/api/food-safety/pets',
+        auth: 'Bearer key',
+        summary: 'Every supported species.',
+        params: [
+          { name: 'Authorization', in: 'header', type: 'string', required: true, description: 'Bearer sk-… — your API key.' },
+        ],
+        response: `{
+  "supportedPets": ["dogs","cats","rabbits","hamsters","birds","turtles","fish","lizards","snakes","chickens"],
+  "count": 10
+}`,
+      },
+      {
+        method: 'GET',
+        path: '/api/food-safety/stats',
+        auth: 'Bearer key',
+        summary: 'Record counts per species and the total coverage.',
+        params: [
+          { name: 'Authorization', in: 'header', type: 'string', required: true, description: 'Bearer sk-… — your API key.' },
+        ],
+        response: `{
+  "stats": { "dogs": { "safe": 4854, "caution": 3495, "unsafe": 2912, "total": 11261 }, "…": {} },
+  "supportedPets": ["dogs","cats","…"],
+  "totalEntries": 30437,
+  "timestamp": "2026-10-04T09:47:14.672Z"
 }`,
       },
     ],
@@ -588,7 +594,7 @@ export default function DocsPage() {
                 </tr>
                 <tr className="border-b border-slate">
                   <td className="py-2 pr-4"><code className="font-mono text-xs text-charcoal">Authorization</code></td>
-                  <td className="py-2 pr-4">/api/v1/*</td>
+                  <td className="py-2 pr-4">/api/v1/*, bulk endpoints</td>
                   <td className="py-2"><code className="font-mono text-xs">Bearer sk-…</code></td>
                 </tr>
                 <tr className="border-b border-slate">
@@ -608,8 +614,9 @@ export default function DocsPage() {
 
         <Section id="auth" eyebrow="03" title="Authentication">
           <p>
-            <strong className="text-charcoal">Public endpoints need nothing.</strong> Call them
-            directly (subject to the IP rate limit).
+            <strong className="text-charcoal">Only the check endpoint is public.</strong>{' '}
+            <code className="font-mono">GET|POST /api/food-safety/check</code> needs nothing (subject
+            to the IP rate limit). Everything else — search, the food lists, stats — needs a key.
           </p>
           <p>
             <strong className="text-charcoal">Keyed endpoints</strong> require your key on every

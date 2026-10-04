@@ -51,7 +51,7 @@ this setup captures without any extra work.
 
 ```text
 https://petpal.example.com/?utm_source=newsletter&utm_medium=email&utm_campaign=launch
-https://petpal.example.com/browse?utm_source=chatgpt.com&utm_medium=referral
+https://petpal.example.com/?utm_source=chatgpt.com&utm_medium=referral
 ```
 
 **Do not** add UTMs to PetPal's own internal links — it fragments sessions and
