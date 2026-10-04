@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import type { Db } from '../db/database';
+import { getDb, type Db } from '../db/database';
 
 export type QuotaWindow = 'day' | 'month' | 'total';
 
@@ -194,4 +194,12 @@ export class ApiKeyRepository {
   touchLastUsed(id: string): void {
     this.db.prepare('UPDATE api_keys SET last_used_at = ? WHERE id = ?').run(new Date().toISOString(), id);
   }
+}
+
+let singleton: ApiKeyRepository | null = null;
+
+/** Lazily-built shared repository — importing this module opens no database. */
+export function apiKeyRepository(): ApiKeyRepository {
+  if (!singleton) singleton = new ApiKeyRepository(getDb());
+  return singleton;
 }

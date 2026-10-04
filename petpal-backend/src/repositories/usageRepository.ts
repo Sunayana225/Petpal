@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import type { Db } from '../db/database';
+import { getDb, type Db } from '../db/database';
 
 export interface UsageEventInput {
   keyId: string;
@@ -131,4 +131,12 @@ export class UsageRepository {
 
     return { total: total.count, since: since.count };
   }
+}
+
+let singleton: UsageRepository | null = null;
+
+/** Lazily-built shared repository — importing this module opens no database. */
+export function usageRepository(): UsageRepository {
+  if (!singleton) singleton = new UsageRepository(getDb());
+  return singleton;
 }

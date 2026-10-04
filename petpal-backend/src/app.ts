@@ -1,5 +1,5 @@
 import cors from 'cors';
-import express, { Express, NextFunction, Request, Response } from 'express';
+import express, { Express, NextFunction, Request, Response, Router } from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -9,6 +9,7 @@ import { configurePassport, passport } from './auth/passport';
 import { SqliteSessionStore } from './auth/sessionStore';
 import { getDb } from './db/database';
 import { checkOrigin } from './middleware/auth';
+import { requireApiKey, trackUsage } from './middleware/apiKeyAuth';
 import {
   globalErrorHandler,
   healthCheck,
@@ -18,6 +19,7 @@ import {
 import { checkFoodSafetyHandler, foodSafetyRouter } from './routes/foodSafety';
 import { adminRouter } from './routes/admin';
 import { authRouter } from './routes/auth';
+import { meRouter } from './routes/keys';
 import { monitoringRouter, trackMetrics } from './routes/monitoring';
 import { SUPPORTED_PET_KEYS } from './utils/normalization';
 import { API_VERSION } from './version';
@@ -154,9 +156,18 @@ export function createApp(): Express {
 
   // ---- Routes -------------------------------------------------------------
   app.use('/api/auth', authRouter);
+  app.use('/api/me', meRouter);
   app.use('/api/food-safety', foodSafetyRouter);
   app.use('/api/monitoring', monitoringRouter);
   app.use('/api/admin', adminRouter);
+
+  // Keyed developer surface: the same handlers, behind an API key, with usage
+  // metering and a per-key quota. The public `/api/food-safety` mount above
+  // stays open for the shipped apps.
+  const developer = Router();
+  developer.use(requireApiKey, trackUsage);
+  developer.use('/food-safety', foodSafetyRouter);
+  app.use('/api/v1', developer);
 
   app.get('/api/health', healthCheck);
 
