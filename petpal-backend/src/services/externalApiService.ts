@@ -1,5 +1,6 @@
 // External API service for integrating with third-party pet food databases
 import { fetchWithTimeout } from '../utils/http';
+import { logger } from '../utils/logger';
 
 /** Open Pet Food Facts is a nice-to-have; never let it stall a response. */
 const EXTERNAL_API_TIMEOUT_MS = 4000;
@@ -57,14 +58,14 @@ export class ExternalApiService {
       );
 
       if (!searchResponse.ok) {
-        console.log('Open Pet Food Facts search failed:', searchResponse.status);
+        logger.debug('open pet food facts search failed', { status: searchResponse.status });
         return null;
       }
 
       const searchData = await searchResponse.json() as OpenPetFoodFactsSearchResponse;
 
       if (!searchData.products || searchData.products.length === 0) {
-        console.log('No products found in Open Pet Food Facts for:', query);
+        logger.debug('no products found', { query });
         return null;
       }
 
@@ -73,13 +74,13 @@ export class ExternalApiService {
 
       // Check if the product is actually relevant to the search query
       if (!this.isRelevantProduct(product, query)) {
-        console.log('No relevant products found in Open Pet Food Facts for:', query);
+        logger.debug('no relevant products found', { query });
         return null;
       }
 
       return this.formatOpenPetFoodFactsResponse(product, query);
     } catch (error) {
-      console.error('Error searching Open Pet Food Facts:', error);
+      logger.error('open pet food facts search errored', { error });
       return null;
     }
   }
@@ -96,20 +97,20 @@ export class ExternalApiService {
       );
 
       if (!response.ok) {
-        console.log('Open Pet Food Facts barcode lookup failed:', response.status);
+        logger.debug('open pet food facts barcode lookup failed', { status: response.status });
         return null;
       }
 
       const data = await response.json() as OpenPetFoodFactsProductResponse;
 
       if (data.status === 0 || !data.product) {
-        console.log('Product not found in Open Pet Food Facts for barcode:', barcode);
+        logger.debug('product not found for barcode', { barcode });
         return null;
       }
 
       return this.formatOpenPetFoodFactsResponse(data.product, barcode);
     } catch (error) {
-      console.error('Error fetching from Open Pet Food Facts:', error);
+      logger.error('open pet food facts fetch errored', { error });
       return null;
     }
   }

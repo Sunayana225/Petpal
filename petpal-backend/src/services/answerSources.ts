@@ -1,5 +1,4 @@
 import type { FoodSafetyResult } from '../types/foodSafety';
-import type { PetKey } from '../utils/normalization';
 import { AIService } from './aiService';
 import { ExternalApiService } from './externalApiService';
 
@@ -21,7 +20,7 @@ export interface AnswerSource {
    * call only.
    */
   resolve(
-    petKey: PetKey,
+    petLabel: string,
     pet: string,
     food: string,
     apiKey?: string,
@@ -36,8 +35,8 @@ export interface AnswerSource {
 export class OpenPetFoodFactsSource implements AnswerSource {
   readonly source = 'external' as const;
 
-  async resolve(petKey: PetKey, pet: string, food: string): Promise<FoodSafetyResult | null> {
-    const external = await ExternalApiService.searchAllSources(food, petKey);
+  async resolve(petLabel: string, pet: string, food: string): Promise<FoodSafetyResult | null> {
+    const external = await ExternalApiService.searchAllSources(food, petLabel);
     if (!external) return null;
 
     return {
@@ -70,12 +69,12 @@ export class AiAnswerSource implements AnswerSource {
   readonly source = 'ai' as const;
 
   async resolve(
-    petKey: PetKey,
+    petLabel: string,
     pet: string,
     food: string,
     apiKey?: string,
   ): Promise<FoodSafetyResult | null> {
-    const ai = await AIService.getFoodSafetyAdvice(food, petKey, apiKey);
+    const ai = await AIService.getFoodSafetyAdvice(food, petLabel, apiKey);
 
     return {
       pet,

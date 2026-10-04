@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { API_VERSION, createApp } from './app';
+import { logger } from './utils/logger';
 
 const PORT = Number(process.env.PORT || 3001);
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -13,10 +14,12 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const app = createApp();
 
 const server: Server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🐾 PetPal API v${API_VERSION} running on port ${PORT}`);
-  console.log(`📊 Environment: ${NODE_ENV}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`📖 API info:     http://localhost:${PORT}/api/info`);
+  logger.info('PetPal API listening', {
+    version: API_VERSION,
+    environment: NODE_ENV,
+    port: PORT,
+    health: `http://localhost:${PORT}/api/health`,
+  });
 });
 
 /**
@@ -24,20 +27,20 @@ const server: Server = app.listen(PORT, '0.0.0.0', () => {
  * mid-response. A hard 10s cap stops a stuck socket from blocking the rollout.
  */
 function shutdown(signal: string): void {
-  console.log(`\n${signal} received — shutting down gracefully...`);
+  logger.info('shutting down gracefully', { signal });
 
   const forceExit = setTimeout(() => {
-    console.error('Forced shutdown: still open after 10s');
+    logger.error('forced shutdown: server still open after 10s');
     process.exit(1);
   }, 10_000);
   forceExit.unref();
 
   server.close((error) => {
     if (error) {
-      console.error('Error while closing server:', error);
+      logger.error('error while closing server', { error });
       process.exit(1);
     }
-    console.log('Shutdown complete.');
+    logger.info('shutdown complete');
     process.exit(0);
   });
 
@@ -52,11 +55,11 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled promise rejection:', reason);
+  logger.error('unhandled promise rejection', { error: reason });
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught exception:', error);
+  logger.error('uncaught exception', { error });
   shutdown('uncaughtException');
 });
 

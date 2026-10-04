@@ -1,5 +1,6 @@
 // Direct API approach for Gemini 2.5 Flash (latest model)
 import { fetchWithTimeout } from '../utils/http';
+import { logger } from '../utils/logger';
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 const GEMINI_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -134,7 +135,7 @@ export class AIService {
 
       return this.parseAIResponse(text, food, pet);
     } catch (error) {
-      console.error('AI Service Error:', error);
+      logger.error('gemini request failed', { byok: Boolean(apiKeyOverride), error });
       return this.getFallbackResponse(food, pet);
     }
   }

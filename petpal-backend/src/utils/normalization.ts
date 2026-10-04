@@ -82,6 +82,16 @@ export function normalizeFoodKey(food: string): string {
 }
 
 /**
+ * A best-effort label for a pet we have no canonical key for (e.g. `tiger`),
+ * used to key the AI answer cache and to prompt the model. Returns `''` when
+ * there is nothing usable.
+ */
+export function normalizePetLabel(pet: string): string {
+  if (typeof pet !== 'string') return '';
+  return pet.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+/**
  * Food names that end in "s" but are already singular. Without this list
  * `singularize('grass')` would happily produce `'gras'`.
  */

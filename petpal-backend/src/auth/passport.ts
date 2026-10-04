@@ -3,6 +3,7 @@ import { Strategy as GitHubStrategy } from 'passport-github2';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 
 import { userRepository, type OAuthProfile, type User } from '../repositories/userRepository';
+import { logger } from '../utils/logger';
 
 export type OAuthProvider = 'github' | 'google';
 
@@ -85,11 +86,9 @@ export function configurePassport(): void {
   }
 }
 
-/** Config warnings are noise in the test suite. */
+/** OAuth is optional; a missing config is a warning, not an error. */
 function warnUnconfigured(provider: string, variables: string): void {
-  if (process.env.NODE_ENV !== 'test') {
-    console.warn(`[auth] ${provider} OAuth not configured (set ${variables})`);
-  }
+  logger.warn('OAuth provider not configured', { provider, variables });
 }
 
 export { passport };

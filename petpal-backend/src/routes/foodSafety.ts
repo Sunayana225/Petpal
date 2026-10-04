@@ -3,6 +3,7 @@ import { body, query, validationResult } from 'express-validator';
 
 import { asyncHandler } from '../middleware/errorHandler';
 import { FoodSafetyService } from '../services/foodSafetyService';
+import { logger } from '../utils/logger';
 
 const router = Router();
 const foodSafetyService = new FoodSafetyService();
@@ -46,16 +47,24 @@ export const checkFoodSafetyHandler = asyncHandler(
     const pet = String(req.body?.pet ?? req.query?.pet ?? req.query?.animal ?? '').trim();
     const food = String(req.body?.food ?? req.query?.food ?? '').trim();
     // Optional BYOK: a caller's own Gemini key, used for this request only.
-    // Deliberately never logged.
+    // Deliberately never logged (and the logger redacts anything key-like).
     const apiKey = req.header('x-gemini-key')?.trim() || undefined;
+    const requestId = (res.locals.requestId as string | undefined) ?? undefined;
+    const log = logger.child({ requestId: requestId ?? null });
     const startTime = Date.now();
 
-    console.log(`[FOOD_SAFETY_CHECK] Pet: ${pet}, Food: ${food}, IP: ${req.ip}`);
+    log.debug('check requested', { pet, food, ip: req.ip, byok: Boolean(apiKey) });
 
-    const result = await foodSafetyService.checkFoodSafety(pet, food, apiKey ? { apiKey } : {});
+    const result = await foodSafetyService.checkFoodSafety(pet, food, { apiKey, requestId });
     const duration = Date.now() - startTime;
 
-    console.log(`[FOOD_SAFETY_CHECK] Completed in ${duration}ms, Safety: ${result.safety}`);
+    log.info('check completed', {
+      pet,
+      food,
+      safety: result.safety,
+      source: result.source,
+      ms: duration,
+    });
 
     res.json({
       ...result,

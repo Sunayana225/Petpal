@@ -1,6 +1,7 @@
 import type { FoodItem, FoodSafetyResult, SafetyLevel } from '../types/foodSafety';
-import { normalizeFoodKey, normalizePetKey, type PetKey } from '../utils/normalization';
 import { TTL, TtlCache } from '../utils/cache';
+import { logger, type Logger } from '../utils/logger';
+import { normalizeFoodKey, normalizePetKey, normalizePetLabel } from '../utils/normalization';
 import { answerCache, type AnswerStore } from './answerCache';
 import { type AnswerSource, defaultAnswerSources } from './answerSources';
 import { FoodSafetyRepository, foodSafetyRepository, type IndexedFood } from './foodSafetyRepository';
@@ -91,25 +92,35 @@ export class FoodSafetyService {
   async checkFoodSafety(
     pet: string,
     food: string,
-    options: { apiKey?: string } = {},
+    options: { apiKey?: string; requestId?: string } = {},
   ): Promise<FoodSafetyResult> {
+    const startedAt = Date.now();
+    const log = logger.child({ requestId: options.requestId ?? null, pet, food });
+
     const petKey = normalizePetKey(pet);
+    // A species we don't curate (e.g. "tiger") still gets a label, so it can be
+    // answered by the remote sources instead of being refused outright.
+    const petLabel = petKey ?? normalizePetLabel(pet);
     const foodKey = normalizeFoodKey(food);
 
     // 1. Local veterinary database — instant, free, and the most trustworthy
-    //    answer we have. This is the path that singular/plural mismatches used
-    //    to skip entirely.
+    //    answer we have. Curated species only.
     if (petKey) {
       const record = this.repository.search(food, petKey);
-      if (record) return this.fromDatabase(record, pet, food);
+      if (record) {
+        log.debug('resolved from database', { safety: record.safety, ms: Date.now() - startedAt });
+        return this.fromDatabase(record, pet, food);
+      }
     }
 
-    // 2. Nothing to look up with — and deliberately *before* any remote call, so
-    //    a typo like "dragon" or an empty string never spends a Gemini credit.
-    if (!petKey || !foodKey) {
-      const reason = !petKey
-        ? `we don't have data for the pet type "${pet}"`
-        : `no food name was provided`;
+    // 2. Need a food and something to look it up for. Only a genuinely empty
+    //    input stops here — an unknown *species* now falls through to AI.
+    if (!foodKey || !petLabel) {
+      const reason = !foodKey ? 'no food name was provided' : `the pet type "${pet}" was not readable`;
+      log.warn('cannot resolve: incomplete input', {
+        hasFood: Boolean(foodKey),
+        hasPet: Boolean(petLabel),
+      });
       return {
         pet,
         food,
@@ -119,21 +130,33 @@ export class FoodSafetyService {
       };
     }
 
+    if (!petKey) {
+      log.info('unsupported species — falling through to the AI sources', { petLabel });
+    }
+
     // 3. Remote resolution, memoised in-process *and* durably. The durable cache
     //    is checked first, so a food resolved before — even in a previous process
     //    — never reaches Gemini again.
-    const cacheKey = `${petKey}|${foodKey}`;
-    const { value } = await this.answerCache.getOrSet(
+    const cacheKey = `${petLabel}|${foodKey}`;
+    const { value, fromCache } = await this.answerCache.getOrSet(
       cacheKey,
       (result) => (result.safety === 'unknown' ? TTL.unknown : TTL.ai),
       () => {
-        const stored = this.durable?.getServable(petKey, foodKey);
-        return stored
-          ? Promise.resolve(stored)
-          : this.resolveRemotely(petKey, pet, food, options.apiKey);
+        const stored = this.durable?.getServable(petLabel, foodKey);
+        if (stored) {
+          log.debug('durable cache hit');
+          return Promise.resolve(stored);
+        }
+        return this.resolveRemotely(petLabel, pet, food, options.apiKey, log);
       },
     );
 
+    log.info('resolved', {
+      source: value.source,
+      safety: value.safety,
+      cached: fromCache,
+      ms: Date.now() - startedAt,
+    });
     return { ...value, pet, food };
   }
 
@@ -143,23 +166,36 @@ export class FoodSafetyService {
    * chain degrades to an honest `unknown`.
    */
   private async resolveRemotely(
-    petKey: PetKey,
+    petLabel: string,
     pet: string,
     food: string,
-    apiKey?: string,
+    apiKey: string | undefined,
+    log: Logger,
   ): Promise<FoodSafetyResult> {
     for (const source of this.sources) {
+      const sourceStartedAt = Date.now();
       try {
-        const result = await source.resolve(petKey, pet, food, apiKey);
+        const result = await source.resolve(petLabel, pet, food, apiKey);
         if (result) {
-          this.persist(petKey, result, apiKey);
+          log.info('remote source answered', {
+            source: source.source,
+            safety: result.safety,
+            byok: Boolean(apiKey),
+            ms: Date.now() - sourceStartedAt,
+          });
+          this.persist(petLabel, result, apiKey, log);
           return result;
         }
+        log.debug('remote source declined', {
+          source: source.source,
+          ms: Date.now() - sourceStartedAt,
+        });
       } catch (error) {
-        console.error(`[FoodSafetyService] ${source.source} lookup failed:`, error);
+        log.error('remote source failed', { source: source.source, error });
       }
     }
 
+    log.warn('no remote source could answer', { byok: Boolean(apiKey) });
     const fallback: FoodSafetyResult = {
       pet,
       food,
@@ -167,8 +203,8 @@ export class FoodSafetyService {
       message: buildMessage('unknown', food, pet),
       source: 'none',
     };
-    // Remember the dead end too — re-asking Gemini won't change the answer.
-    this.persist(petKey, fallback, apiKey);
+    // Remember the dead end too — re-asking the sources won't change the answer.
+    this.persist(petLabel, fallback, apiKey, log);
     return fallback;
   }
 
@@ -177,9 +213,17 @@ export class FoodSafetyService {
    * A user-supplied key that failed (yielding `unknown`) is deliberately *not*
    * written, so a bad BYOK key cannot poison the shared cache for everyone.
    */
-  private persist(petKey: PetKey, result: FoodSafetyResult, apiKey?: string): void {
-    if (apiKey && result.safety === 'unknown') return;
-    this.durable?.recordAnswer(petKey, result);
+  private persist(
+    petLabel: string,
+    result: FoodSafetyResult,
+    apiKey: string | undefined,
+    log: Logger,
+  ): void {
+    if (apiKey && result.safety === 'unknown') {
+      log.debug('not caching: BYOK key produced no verdict');
+      return;
+    }
+    this.durable?.recordAnswer(petLabel, result);
   }
 
   private fromDatabase(record: IndexedFood, pet: string, food: string): FoodSafetyResult {

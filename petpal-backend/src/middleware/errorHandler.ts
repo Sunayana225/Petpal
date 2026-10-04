@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
+import { logger } from '../utils/logger';
 import { API_VERSION } from '../version';
 
 export interface AppError extends Error {
@@ -22,38 +23,19 @@ export class CustomError extends Error implements AppError {
 
 // Error logging utility
 export const logError = (error: AppError, req?: Request) => {
-  const timestamp = new Date().toISOString();
-  const errorInfo = {
-    timestamp,
-    message: error.message,
-    stack: error.stack,
-    statusCode: error.statusCode,
+  logger.error(error.message || 'Unhandled error', {
+    statusCode: error.statusCode ?? 500,
     isOperational: error.isOperational,
+    requestId: (req?.res?.locals?.requestId as string | undefined) ?? undefined,
     ...(req && {
       method: req.method,
       url: req.url,
       ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      body: req.method === 'POST' ? req.body : undefined
-    })
-  };
-
-  if (process.env.NODE_ENV === 'production') {
-    // In production, log as JSON for log aggregation services
-    console.error(JSON.stringify(errorInfo));
-  } else {
-    // In development, log in a more readable format
-    console.error('\n=== ERROR ===');
-    console.error(`Time: ${timestamp}`);
-    console.error(`Message: ${error.message}`);
-    console.error(`Status: ${error.statusCode || 500}`);
-    if (req) {
-      console.error(`Request: ${req.method} ${req.url}`);
-      console.error(`IP: ${req.ip}`);
-    }
-    console.error(`Stack: ${error.stack}`);
-    console.error('=============\n');
-  }
+      userAgent: req.get?.('User-Agent'),
+      // Never log request bodies: they can carry keys or personal data.
+    }),
+    error,
+  });
 };
 
 /** Human-readable label per status code — keeps responses self-describing. */

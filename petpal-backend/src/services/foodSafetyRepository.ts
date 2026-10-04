@@ -1,6 +1,7 @@
 import { manyPetsFoodSafetyData } from '../data/manyPetsFoodSafetyData';
 import type { FoodItem, SafetyCategory } from '../types/foodSafety';
 import { findDataFile, readJsonFile } from '../utils/dataFiles';
+import { logger } from '../utils/logger';
 import {
   SAFETY_RANK,
   foodVariants,
@@ -29,9 +30,7 @@ const CATEGORIES: SafetyCategory[] = ['unsafe', 'caution', 'safe'];
 function loadLegacyDatabase(): LegacyDatabase {
   const databasePath = findDataFile('foodSafety.json');
   if (!databasePath) {
-    console.error(
-      '[foodSafetyRepository] data/foodSafety.json not found — falling back to ManyPets data only',
-    );
+    logger.warn('data/foodSafety.json not found — falling back to ManyPets data only');
     return {};
   }
 
