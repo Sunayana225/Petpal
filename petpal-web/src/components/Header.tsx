@@ -1,13 +1,20 @@
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 
+import { useAuth } from '../lib/auth';
 import { EASE } from '../motion/tokens';
 
 const LINKS = [
   { to: '/', label: 'Checker' },
   { to: '/browse', label: 'Browse' },
   { to: '/docs', label: 'API' },
+];
+
+const CONSOLE_LINKS = [
+  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/tokens', label: 'Tokens' },
+  { to: '/usage', label: 'Usage' },
 ];
 
 /**
@@ -19,13 +26,12 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const { scrollY } = useScroll();
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   useMotionValueEvent(scrollY, 'change', (value) => setScrolled(value > 16));
 
-  // A route change should never leave a menu hanging open.
   useEffect(() => setOpen(false), [location.pathname]);
 
-  // Lock scroll while the full-screen menu is open.
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
     return () => {
@@ -81,6 +87,31 @@ export default function Header() {
               )}
             </NavLink>
           ))}
+
+          {user ? (
+            <span className="flex items-center gap-6 border-l border-slate pl-10">
+              <Link
+                to="/dashboard"
+                className="link-line text-[12px] uppercase tracking-wide-cap text-charcoal"
+              >
+                Console
+              </Link>
+              <button
+                type="button"
+                onClick={() => void signOut()}
+                className="text-[12px] uppercase tracking-wide-cap text-mist transition-colors duration-500 hover:text-ink"
+              >
+                Sign out
+              </button>
+            </span>
+          ) : (
+            <Link
+              to="/login"
+              className="border-l border-slate pl-10 text-[12px] uppercase tracking-wide-cap text-charcoal transition-colors duration-500 hover:text-ink"
+            >
+              Sign in
+            </Link>
+          )}
         </nav>
 
         <button
@@ -114,23 +145,36 @@ export default function Header() {
             className="overflow-hidden border-t border-slate bg-parchment sm:hidden"
           >
             <ul className="flex flex-col px-5 py-4">
-              {LINKS.map((link, index) => (
-                <motion.li
-                  key={link.to}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: EASE, delay: 0.06 * index }}
-                  className="border-b border-slate last:border-b-0"
-                >
-                  <NavLink
-                    to={link.to}
-                    end={link.to === '/'}
-                    className="block py-4 font-display text-2xl tracking-tight text-ink"
+              {[...LINKS, ...(user ? CONSOLE_LINKS : [{ to: '/login', label: 'Sign in' }])].map(
+                (link, index) => (
+                  <motion.li
+                    key={link.to}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: EASE, delay: 0.06 * index }}
+                    className="border-b border-slate last:border-b-0"
                   >
-                    {link.label}
-                  </NavLink>
+                    <NavLink
+                      to={link.to}
+                      end={link.to === '/'}
+                      className="block py-4 font-display text-2xl tracking-tight text-ink"
+                    >
+                      {link.label}
+                    </NavLink>
+                  </motion.li>
+                ),
+              )}
+              {user && (
+                <motion.li initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-4">
+                  <button
+                    type="button"
+                    onClick={() => void signOut()}
+                    className="text-[12px] uppercase tracking-wide-cap text-mist"
+                  >
+                    Sign out
+                  </button>
                 </motion.li>
-              ))}
+              )}
             </ul>
           </motion.nav>
         )}

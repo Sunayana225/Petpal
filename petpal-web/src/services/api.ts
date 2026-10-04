@@ -43,7 +43,7 @@ export function buildQuery(params: Record<string, string | undefined | null>): s
   return encoded ? `?${encoded}` : '';
 }
 
-async function requestJson<T>(
+export async function requestJson<T>(
   path: string,
   init: RequestInit = {},
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
@@ -54,6 +54,7 @@ async function requestJson<T>(
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
+      credentials: 'include',
       signal: controller.signal,
       headers: {
         Accept: 'application/json',

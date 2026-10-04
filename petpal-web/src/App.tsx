@@ -5,10 +5,15 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import { setCanonical, trackPageview } from './lib/analytics';
+import { AuthProvider, RequireAuth } from './lib/auth';
 import PageTransition from './motion/PageTransition';
 import BrowsePage from './pages/BrowsePage';
+import DashboardPage from './pages/DashboardPage';
 import DocsPage from './pages/DocsPage';
 import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import TokensPage from './pages/TokensPage';
+import UsagePage from './pages/UsagePage';
 
 export default function App() {
   const location = useLocation();
@@ -22,22 +27,49 @@ export default function App() {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-parchment">
-      <Header />
-      <main className="flex-1">
-        <AnimatePresence mode="wait" initial={false}>
-          <PageTransition key={location.pathname}>
-            <Routes location={location}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/browse" element={<BrowsePage />} />
-              <Route path="/docs" element={<DocsPage />} />
-              {/* Unknown paths fall back to the checker rather than a blank page. */}
-              <Route path="*" element={<HomePage />} />
-            </Routes>
-          </PageTransition>
-        </AnimatePresence>
-      </main>
-      <Footer />
-    </div>
+    <AuthProvider>
+      <div className="flex min-h-screen flex-col bg-parchment">
+        <Header />
+        <main className="flex-1">
+          <AnimatePresence mode="wait" initial={false}>
+            <PageTransition key={location.pathname}>
+              <Routes location={location}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/browse" element={<BrowsePage />} />
+                <Route path="/docs" element={<DocsPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <RequireAuth>
+                      <DashboardPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/tokens"
+                  element={
+                    <RequireAuth>
+                      <TokensPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/usage"
+                  element={
+                    <RequireAuth>
+                      <UsagePage />
+                    </RequireAuth>
+                  }
+                />
+                {/* Unknown paths fall back to the checker rather than a blank page. */}
+                <Route path="*" element={<HomePage />} />
+              </Routes>
+            </PageTransition>
+          </AnimatePresence>
+        </main>
+        <Footer />
+      </div>
+    </AuthProvider>
   );
 }

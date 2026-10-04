@@ -73,3 +73,55 @@ export interface HealthResponse {
 }
 
 export type FoodCategory = 'safe' | 'caution' | 'unsafe';
+
+// ---- Developer console ------------------------------------------------------
+
+export interface AuthUser {
+  id: string;
+  provider: string;
+  email: string | null;
+  name: string | null;
+  avatarUrl: string | null;
+  role: 'user' | 'admin';
+}
+
+export type QuotaWindow = 'day' | 'month' | 'total';
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  prefix: string;
+  last4: string;
+  enabled: boolean;
+  scope: string;
+  quotaLimit: number | null;
+  quotaWindow: QuotaWindow;
+  ipAllowlist: string[];
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+}
+
+export interface CreatedApiKey {
+  key: ApiKey;
+  /** The full key — available only in the response that created it. */
+  rawKey: string;
+}
+
+export interface UsageEvent {
+  id: string;
+  keyId: string;
+  ts: string;
+  method: string;
+  path: string;
+  status: number;
+  latencyMs: number;
+  source: string | null;
+}
+
+export interface UsageResponse {
+  totals: { total: number; since: number };
+  daily: { day: string; count: number }[];
+  recent: UsageEvent[];
+}
+
