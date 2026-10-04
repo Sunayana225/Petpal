@@ -47,6 +47,31 @@ authoritative layer, so the more cautious verdict still wins on any conflict.
 Set `ADMIN_TOKEN` in the environment; without it, every `/api/admin/*` request is
 refused (it fails closed).
 
+## Developer platform (accounts, API keys, console)
+
+Sign in with GitHub or Google, then create keys in the console (`/login` →
+`/dashboard`).
+
+- **Sessions** are httpOnly cookies backed by SQLite, so logins survive restarts.
+- **Keys** — `POST /api/me/keys` returns the raw `sk-…` **once**; only a sha256
+  hash is stored. Keys can be enabled/disabled, given a rolling quota, and revoked.
+- **Keyed API** — `/api/v1/food-safety/*` is the *same* handlers behind
+  `Authorization: Bearer sk-…`, with a per-key quota (`429` when exceeded) and
+  usage logging. The public `/api/food-safety/*` stays open for the shipped apps.
+- **Usage** — one `usage_events` row per keyed call; `GET /api/me/usage` returns
+  totals, per-day counts and recent calls.
+
+### Registering OAuth apps (you must do this)
+
+The API cannot create these for you:
+
+- **GitHub** → Settings → Developer settings → OAuth Apps.
+  Callback: `http://localhost:3001/api/auth/github/callback`
+- **Google Cloud** → APIs & Services → Credentials → OAuth client (Web).
+  Callback: `http://localhost:3001/api/auth/google/callback`
+
+Set `SESSION_SECRET` and the client ids/secrets (see `.env.example`).
+
 ## Supported species
 
 Ten: **dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes,
@@ -120,6 +145,14 @@ elsewhere, set `VITE_API_URL`.
 | `NODE_ENV` | `development` / `production` / `test` |
 | `GEMINI_API_KEY` | Enables the AI fallback (optional) |
 | `ADMIN_TOKEN` | Token for the `/api/admin/*` review queue; unset disables it |
+| `SESSION_SECRET` | Signs session cookies (required in production) |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth app |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client |
+| `WEB_APP_URL` | Where the browser returns after sign-in |
+| `OAUTH_CALLBACK_BASE` | Public base URL used to build OAuth callbacks |
+| `ADMIN_EMAILS` | Comma-separated emails promoted to admin on login |
+| `DB_PATH` | SQLite file (default `data/petpal.db`) |
+| `DEFAULT_KEY_QUOTA` / `DEFAULT_KEY_WINDOW` | Default quota for new keys |
 | `CORS_ORIGIN` | Comma-separated allowed origins in production |
 | `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX_REQUESTS` | Rate-limit tuning |
 | `TRUST_PROXY` | Set to `1` when behind a proxy without `NODE_ENV=production` |
@@ -174,6 +207,11 @@ curl -X POST http://localhost:3001/api/food-safety/check \
 ```
 
 Verdicts: `safe`, `caution`, `unsafe`, `unknown`.
+
+Auth & console endpoints (session cookie): `GET /api/auth/me`,
+`GET /api/auth/:provider`, `POST /api/auth/logout`, `GET|POST /api/me/keys`,
+`PATCH|DELETE /api/me/keys/:id`, `GET /api/me/usage`.
+Keyed API: `/api/v1/food-safety/*` (requires `Authorization: Bearer sk-…`).
 
 ## Testing
 
