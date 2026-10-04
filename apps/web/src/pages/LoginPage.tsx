@@ -2,8 +2,8 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../lib/auth';
 import { Reveal } from '../motion/primitives';
-import { API_BASE_URL, ApiError } from '../services/api';
-import { consoleApi } from '../services/consoleApi';
+import { API_BASE_URL, ApiError } from '../api';
+import { consoleApi } from '../api';
 
 /**
  * Sign-in for the developer console. GitHub/Google buttons hand off to the API's

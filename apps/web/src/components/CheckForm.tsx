@@ -3,9 +3,9 @@ import { useState, type FormEvent } from 'react';
 
 import { getGeminiKey } from '../lib/geminiKey';
 import { EASE } from '../motion/tokens';
-import { PETS } from '../pets';
-import { api, ApiError } from '../services/api';
-import type { FoodSafetyResult } from '../types';
+import { PETS } from '../domain/pets';
+import { foodSafetyApi, ApiError } from '../api';
+import type { FoodSafetyResult } from '../domain/types';
 import GeminiKeyPanel from './GeminiKeyPanel';
 import ResultCard from './ResultCard';
 
@@ -33,7 +33,7 @@ export default function CheckForm() {
     setResult(null);
 
     try {
-      setResult(await api.checkFoodSafety(pet, trimmed, getGeminiKey()));
+      setResult(await foodSafetyApi.checkFoodSafety(pet, trimmed, getGeminiKey()));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.');
     } finally {

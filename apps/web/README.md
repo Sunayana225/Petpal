@@ -1,21 +1,19 @@
 # 🐾 PetPal Web
 
-The React client for [PetPal](../README.md) — a food-safety checker for pets.
+The React client for [PetPal](../../README.md) — a food-safety checker for pets.
 
 ## Quick start
 
-```bash
-npm install
-npm run dev        # http://localhost:3000 (proxies /api -> localhost:3001)
-```
-
-Start the backend first:
+This app is part of an npm workspace, so dependencies are installed **once** at
+the repository root:
 
 ```bash
-cd ../petpal-backend
-npm install
-npm run dev        # http://localhost:3001
+npm install                 # once, from the repository root
+npm run dev:api             # the API on :3001 (separate terminal)
+npm run dev:web             # Vite on :3000, proxying /api -> :3001
 ```
+
+Prefer to run it on its own? From this folder, `npm run dev` works too.
 
 ## Scripts
 
@@ -27,6 +25,18 @@ npm run dev        # http://localhost:3001
 | `npm test` | Run Vitest unit tests |
 | `npm run lint` / `lint:fix` | ESLint (flat config, React hooks rules) |
 | `npm run typecheck` | Type-check only |
+
+## Layout
+
+```
+src/
+  api/          HTTP client, food-safety and console endpoints
+  domain/       shared types and species/verdict metadata
+  lib/          analytics, attribution, auth context, Gemini key storage
+  components/   presentational components
+  pages/        one component per route
+  motion/       motion tokens and primitives
+```
 
 ## Configuration
 

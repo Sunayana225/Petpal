@@ -1,5 +1,5 @@
-import { requestJson } from './api';
-import type { ApiKey, AuthUser, CreatedApiKey, QuotaWindow, UsageResponse } from '../types';
+import type { ApiKey, AuthUser, CreatedApiKey, QuotaWindow, UsageResponse } from '../domain/types';
+import { requestJson } from './client';
 
 /** The session-authenticated endpoints behind the developer console. */
 export const consoleApi = {

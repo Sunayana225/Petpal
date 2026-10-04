@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 
 import { Reveal } from '../motion/primitives';
-import { ApiError } from '../services/api';
-import { consoleApi } from '../services/consoleApi';
-import type { UsageResponse } from '../types';
+import { ApiError } from '../api';
+import { consoleApi } from '../api';
+import type { UsageResponse } from '../domain/types';
 
 export default function UsagePage() {
   const [usage, setUsage] = useState<UsageResponse | null>(null);

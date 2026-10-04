@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 
 import { useAuth } from '../lib/auth';
 import { Reveal } from '../motion/primitives';
-import { ApiError } from '../services/api';
-import { consoleApi } from '../services/consoleApi';
-import type { ApiKey, UsageResponse } from '../types';
+import { ApiError } from '../api';
+import { consoleApi } from '../api';
+import type { ApiKey, UsageResponse } from '../domain/types';
 
 export default function DashboardPage() {
   const { user } = useAuth();

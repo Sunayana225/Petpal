@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import CheckForm from '../components/CheckForm';
 import { Reveal } from '../motion/primitives';
 import { EASE } from '../motion/tokens';
-import { PETS } from '../pets';
+import { PETS } from '../domain/pets';
 
 const HERO_LINES = ['Can my pet', 'eat this?'];
 

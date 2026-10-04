@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 import CreateKeyDialog from '../components/CreateKeyDialog';
 import { Reveal } from '../motion/primitives';
-import { ApiError } from '../services/api';
-import { consoleApi } from '../services/consoleApi';
-import type { ApiKey } from '../types';
+import { ApiError } from '../api';
+import { consoleApi } from '../api';
+import type { ApiKey } from '../domain/types';
 
 function quotaLabel(key: ApiKey): string {
   const used = key.usage?.used;

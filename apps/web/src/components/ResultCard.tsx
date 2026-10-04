@@ -1,6 +1,6 @@
 import { Reveal } from '../motion/primitives';
-import { SAFETY_META } from '../pets';
-import type { FoodSafetyResult, SafetyLevel } from '../types';
+import { SAFETY_META } from '../domain/pets';
+import type { FoodSafetyResult, SafetyLevel } from '../domain/types';
 import SafetyBadge from './SafetyBadge';
 
 const SOURCE_LABELS: Record<string, string> = {

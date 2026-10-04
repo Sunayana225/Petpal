@@ -9,8 +9,8 @@ import {
 } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
-import { consoleApi } from '../services/consoleApi';
-import type { AuthUser } from '../types';
+import { consoleApi } from '../api';
+import type { AuthUser } from '../domain/types';
 
 interface AuthState {
   user: AuthUser | null;

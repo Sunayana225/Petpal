@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 import { EASE } from '../motion/tokens';
-import { consoleApi } from '../services/consoleApi';
-import { ApiError } from '../services/api';
-import type { CreatedApiKey } from '../types';
+import { consoleApi } from '../api';
+import { ApiError } from '../api';
+import type { CreatedApiKey } from '../domain/types';
 
 interface Props {
   open: boolean;

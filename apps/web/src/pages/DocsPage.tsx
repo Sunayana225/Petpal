@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
 import { Reveal } from '../motion/primitives';
-import { SAFETY_META } from '../pets';
-import type { SafetyLevel } from '../types';
+import { SAFETY_META } from '../domain/pets';
+import type { SafetyLevel } from '../domain/types';
 
 const SAFETY_LEVELS: SafetyLevel[] = ['safe', 'caution', 'unsafe', 'unknown'];
 

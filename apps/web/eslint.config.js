@@ -3,9 +3,11 @@ import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
+import { sharedIgnores, sharedTsRules } from '../../eslint.config.base.mjs';
+
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
+    ignores: sharedIgnores,
   },
 
   js.configs.recommended,
@@ -22,11 +24,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
-      ],
+      ...sharedTsRules,
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },

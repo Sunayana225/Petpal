@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { clearGeminiKey, getGeminiKey, setGeminiKey } from '../lib/geminiKey';
 import { EASE } from '../motion/tokens';
-import { api, ApiError } from '../services/api';
+import { foodSafetyApi, ApiError } from '../api';
 
 type SaveState = 'idle' | 'checking' | 'valid' | 'invalid';
 
@@ -32,7 +32,7 @@ export default function GeminiKeyPanel() {
     setMessage('Checking with Google…');
 
     try {
-      const { valid } = await api.validateGeminiKey(key);
+      const { valid } = await foodSafetyApi.validateGeminiKey(key);
       if (valid) {
         setGeminiKey(key);
         setState('valid');

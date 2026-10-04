@@ -1,5 +1,5 @@
-import { SAFETY_META } from '../pets';
-import type { SafetyLevel } from '../types';
+import { SAFETY_META } from '../domain/pets';
+import type { SafetyLevel } from '../domain/types';
 
 const SIZE_CLASSES = {
   sm: 'px-2.5 py-0.5 text-[10px]',

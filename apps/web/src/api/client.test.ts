@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ApiError, buildQuery } from './api';
+import { ApiError, buildQuery } from './client';
 
 describe('buildQuery', () => {
   it('joins params with a leading ?', () => {
