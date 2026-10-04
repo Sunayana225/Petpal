@@ -29,7 +29,7 @@ If applicable, add screenshots to help explain your problem.
 - **OS**: [e.g. Windows 11, macOS, Ubuntu]
 - **Browser**: [e.g. Chrome 91, Safari 14] (for web issues)
 - **Node.js Version**: [e.g. 16.14.0] (for backend issues)
-- **Package Version**: [e.g. petpal-backend@1.0.0]
+- **Package Version**: [e.g. @petpal/backend@1.0.0]
 
 ## 📱 Device (for mobile issues)
 - **Device**: [e.g. iPhone 12, Samsung Galaxy]

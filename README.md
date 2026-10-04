@@ -26,7 +26,7 @@ Common suffixes and spellings are normalised (`"Bell-Peppers!!"` → `"bell pepp
 
 An AI answer is **never trusted silently**. When Gemini produces a real verdict
 for a food the database did not know, the answer is captured as a `pending`
-record in `petpal-backend/data/learned.json` (operational data, git-ignored, and
+record in `apps/backend/data/learned.json` (operational data, git-ignored, and
 persisted across restarts).
 
 A human then approves or rejects it through a token-protected admin API:
@@ -100,28 +100,38 @@ number in prose.
 ## Repository layout
 
 ```
-petpal-backend/   Express + TypeScript API
-  src/app.ts            composition root (builds the Express app)
-  src/server.ts         process lifecycle + graceful shutdown
-  src/routes/           HTTP routes and validation
-  src/services/         food-safety domain (repository, service, answer sources)
-  src/middleware/       error handling, health check
-  src/utils/            cache, http, normalization
-  src/data/             generated ManyPets dataset
-  data/foodSafety.json  curated dataset
+apps/backend/     Express + TypeScript API
+  src/app.ts            composition root (middleware + route wiring)
+  src/index.ts          process lifecycle + graceful shutdown
+  src/config/           env parsing, API version
+  src/domain/           pure domain types
+  src/routes/           HTTP routes; foodSafety/ splits check from dataset
+  src/services/         business logic (food safety, AI, keys, answers)
+  src/repositories/     data access (SQLite + in-memory dataset index)
+  src/datasets/         generated ManyPets dataset
+  src/middleware/       auth, API keys, request id, errors
+  src/utils/            cache, http, normalization, logger
+  src/tests/            Jest + Supertest suites
+  data/                 curated + imported JSON datasets
 
-petpal-web/       React 18 + Vite + Tailwind v4 client
-  src/pages/            Home (checker), Docs
+apps/web/         React 18 + Vite + Tailwind v4 client
+  src/api/              HTTP client, food-safety + console endpoints
+  src/domain/           shared types, species/verdict metadata
+  src/pages/            one component per route
   src/components/       CheckForm, ResultCard, Header, Footer, …
+  src/lib/              analytics, attribution, auth context
   src/motion/           motion tokens and primitives
-  src/lib/              api transport, attribution, analytics
 
-petpal-mobile/    Expo + React Native client (TypeScript)
+apps/mobile/      Expo + React Native client (TypeScript)
   App.tsx               bottom-tab navigator
+  src/api/              HTTP client + food-safety endpoints
+  src/domain/           shared types, species/verdict metadata
   src/screens/          Checker, Info
   src/components/       Button, SafetyBadge, ResultView, Reveal
-  src/api.ts            API client (EXPO_PUBLIC_API_URL)
 ```
+
+Cross-cutting documentation lives in [`docs/`](./docs): `architecture.md`,
+`process-flow.md`, `supported-animals.md`, `analytics.md`, `seo-setup.md`.
 
 The backend is a clean layering — **repository → service → routes** — with
 dependencies injected through constructors, so the domain is testable without
@@ -129,33 +139,29 @@ module-level singletons.
 
 ## Quick start
 
-### Backend (required)
+Install **once** at the repository root — every package is an npm workspace.
 
 ```bash
-cd petpal-backend
 npm install
-cp .env.example .env        # optional: add GEMINI_API_KEY for AI fallback
-npm run dev                 # http://localhost:3001
+cp apps/backend/.env.example apps/backend/.env   # optional: add GEMINI_API_KEY
+```
+
+Then start what you need:
+
+```bash
+npm run dev:api      # API on :3001
+npm run dev:web      # web client on :3000 (proxies /api -> :3001)
+npm run dev:mobile   # Expo
 ```
 
 Without an AI key PetPal still works: unknown foods return professional
 "consult your veterinarian" guidance instead of an AI answer.
 
-### Web client
-
-```bash
-cd petpal-web
-npm install
-npm run dev                 # http://localhost:3000
-```
-
-The dev server proxies `/api` to `http://localhost:3001` (see `vite.config.ts`), so
-no client configuration is needed locally. For deployments where the API lives
-elsewhere, set `VITE_API_URL`.
+`npm run verify` at the root lints, type-checks, tests and builds every package.
 
 ## Configuration
 
-### Backend (`petpal-backend/.env`)
+### Backend (`apps/backend/.env`)
 
 | Variable | Purpose |
 | --- | --- |
@@ -178,7 +184,7 @@ elsewhere, set `VITE_API_URL`.
 `OPENAI_API_KEY` is **not** used — it appears in the example file only as a
 placeholder for future work.
 
-### Web (`petpal-web/.env`)
+### Web (`apps/web/.env`)
 
 | Variable | Purpose |
 | --- | --- |
@@ -187,7 +193,7 @@ placeholder for future work.
 | `VITE_UMAMI_WEBSITE_ID`, `VITE_UMAMI_SRC` | …or Umami |
 
 With no analytics variables set, the client ships **zero third-party scripts**. See
-[`petpal-web/ANALYTICS.md`](./petpal-web/ANALYTICS.md).
+[`docs/analytics.md`](./docs/analytics.md).
 
 ## API
 
@@ -236,27 +242,28 @@ Keyed API: `/api/v1/food-safety/*` (requires `Authorization: Bearer sk-…`).
 ## Testing
 
 ```bash
-# Backend — Jest + Supertest
-cd petpal-backend && npm test
+npm test              # every package, from the repository root
 
-# Web — Vitest
-cd petpal-web && npm test
+# or one package at a time
+npm test --workspace @petpal/backend   # Jest + Supertest
+npm test --workspace @petpal/web       # Vitest
 ```
 
-Both projects also expose `npm run lint`, `npm run typecheck` and `npm run build`.
-CI (`.github/workflows/ci.yml`) runs lint, build and tests on Node 20 and 22.
+Every package also exposes `npm run lint`, `npm run typecheck` and `npm run build`;
+`npm run verify` at the root runs all of them. CI (`.github/workflows/ci.yml`) runs
+lint, build and tests on Node 20 and 22.
 
 ## Design
 
 The web client uses a deliberately restrained, editorial design language — a
 parchment canvas, charcoal ink, hairline rules instead of shadows, square corners,
 and a single botanical accent — with slow, decelerating motion and full
-`prefers-reduced-motion` support. Design tokens live in `petpal-web/src/index.css`.
+`prefers-reduced-motion` support. Design tokens live in `apps/web/src/index.css`.
 
 ## Clients
 
-- **Web** (`petpal-web/`) — React + Vite single-page app.
-- **Mobile** (`petpal-mobile/`) — Expo / React Native, sharing the same API and
+- **Web** (`apps/web/`) — React + Vite single-page app.
+- **Mobile** (`apps/mobile/`) — Expo / React Native, sharing the same API and
   design language.
 
 ## Roadmap
@@ -266,7 +273,7 @@ and a single botanical accent — with slow, decelerating motion and full
 
 ## Data sources & attribution
 
-- **Curated dataset** (`petpal-backend/data/foodSafety.json`) — compiled into this repo.
+- **Curated dataset** (`apps/backend/data/foodSafety.json`) — compiled into this repo.
 - **BioVet pet-food-safety** — foods, plants, human medications and household hazards,
   vetted by veterinarians. Adapted from
   [Bio-Vet/pet-food-safety](https://github.com/Bio-Vet/pet-food-safety) under **CC BY 4.0**.

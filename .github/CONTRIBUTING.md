@@ -13,7 +13,7 @@ Thank you for your interest in contributing to PetPal! We welcome contributions 
 
 ## 🐛 Reporting Bugs
 
-1. Check if the bug already exists in [Issues](https://github.com/Sunayana225/Petpal/issues)
+1. Check if the bug already exists in [Issues](https://github.com/your-org/petpal/issues)
 2. Use the Bug Report template
 3. Include:
    - Clear description
@@ -23,7 +23,7 @@ Thank you for your interest in contributing to PetPal! We welcome contributions 
 
 ## 💡 Feature Requests
 
-1. Check existing [Issues](https://github.com/Sunayana225/Petpal/issues) for similar requests
+1. Check existing [Issues](https://github.com/your-org/petpal/issues) for similar requests
 2. Use the Feature Request template
 3. Describe:
    - The feature you'd like
@@ -36,20 +36,14 @@ Thank you for your interest in contributing to PetPal! We welcome contributions 
 
 ```bash
 # Fork and clone the repository
-git clone https://github.com/YourUsername/Petpal.git
-cd Petpal
+git clone https://github.com/your-org/petpal.git
+cd petpal
 
-# Install dependencies for backend
-cd petpal-backend
+# Install every workspace at once (backend, web, mobile)
 npm install
 
-# Install dependencies for web app
-cd ../petpal-web
-npm install
-
-# Install dependencies for mobile app
-cd ../petpal-backend/PetPalMobile
-npm install
+# Everything from the root: lint, typecheck, tests and builds
+npm run verify
 ```
 
 ### Development Workflow
@@ -92,15 +86,14 @@ npm install
 ## 🧪 Testing
 
 ```bash
-# Backend tests
-cd petpal-backend
-npm test
-npm run test:coverage
+# Everything, from the repository root
+npm run verify
 
-# Web app tests
-cd petpal-web
-npm test
-npm run test:coverage
+# Or one workspace at a time
+npm test --workspace @petpal/backend
+npm run test:coverage --workspace @petpal/backend
+
+npm test --workspace @petpal/web
 ```
 
 ## 📖 Documentation
@@ -119,8 +112,8 @@ npm run test:coverage
 
 ## 🔗 Getting Help
 
-- 💬 [GitHub Discussions](https://github.com/Sunayana225/Petpal/discussions)
-- 🐛 [Issues](https://github.com/Sunayana225/Petpal/issues)
+- 💬 [GitHub Discussions](https://github.com/your-org/petpal/discussions)
+- 🐛 [Issues](https://github.com/your-org/petpal/issues)
 - 📧 Create an issue for questions
 
 Thank you for contributing to PetPal! 🐾❤️

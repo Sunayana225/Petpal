@@ -1,0 +1,20 @@
+{
+  "name": "petpal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PetPal — instant, veterinary-sourced answers to \"can my pet eat this?\" across ten species.",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace @petpal/backend",
+    "dev:web": "npm run dev --workspace @petpal/web",
+    "dev:mobile": "npm run start --workspace @petpal/mobile",
+    "build": "npm run build --workspace @petpal/backend && npm run build --workspace @petpal/web",
+    "test": "npm run test --workspace @petpal/backend && npm run test --workspace @petpal/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
+  }
+}
