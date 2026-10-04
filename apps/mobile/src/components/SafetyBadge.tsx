@@ -1,8 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { SAFETY_META } from '../pets';
+import { SAFETY_META } from '../domain/pets';
 import { fonts, space } from '../theme';
-import type { SafetyLevel } from '../types';
+import type { SafetyLevel } from '../domain/types';
 
 /** A verdict tag: a word inside a hairline border, no fill. */
 export default function SafetyBadge({ safety }: { safety: SafetyLevel }) {

@@ -10,13 +10,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { api, ApiError } from '../api';
+import { foodSafetyApi, ApiError } from '../api';
 import Button from '../components/Button';
 import Reveal from '../components/Reveal';
 import ResultView from '../components/ResultView';
-import { PETS } from '../pets';
+import { PETS } from '../domain/pets';
 import { colors, fonts, space } from '../theme';
-import type { FoodSafetyResult } from '../types';
+import type { FoodSafetyResult } from '../domain/types';
 
 const QUICK_TRIES = ['chocolate', 'apple', 'grapes', 'carrot'];
 
@@ -42,7 +42,7 @@ export default function CheckerScreen() {
     setResult(null);
 
     try {
-      setResult(await api.checkFoodSafety(pet, trimmed));
+      setResult(await foodSafetyApi.checkFoodSafety(pet, trimmed));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.');
     } finally {

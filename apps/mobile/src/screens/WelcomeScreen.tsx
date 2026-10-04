@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { api } from '../api';
+import { foodSafetyApi } from '../api';
 import Button from '../components/Button';
 import Reveal from '../components/Reveal';
 import { saveGeminiKey } from '../lib/geminiKey';
@@ -61,7 +61,7 @@ export default function WelcomeScreen({ onDone }: Props) {
     setMessage('Checking with Google…');
 
     try {
-      const { valid } = await api.validateGeminiKey(key);
+      const { valid } = await foodSafetyApi.validateGeminiKey(key);
       if (valid) {
         await saveGeminiKey(key);
         onDone();

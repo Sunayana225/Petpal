@@ -1,5 +1,4 @@
-import { getGeminiKeySync } from './lib/geminiKey';
-import type { FoodSafetyResult } from './types';
+import { getGeminiKeySync } from '../lib/geminiKey';
 
 /**
  * API base URL.
@@ -23,7 +22,12 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+/**
+ * The single fetch wrapper every mobile API module uses. It owns the timeout,
+ * the error shape, JSON headers and the visitor's own Gemini key — nothing
+ * about specific endpoints.
+ */
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
@@ -63,19 +67,3 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     clearTimeout(timer);
   }
 }
-
-export const api = {
-  checkFoodSafety(pet: string, food: string): Promise<FoodSafetyResult> {
-    return request<FoodSafetyResult>(
-      `/food-safety/check?pet=${encodeURIComponent(pet)}&food=${encodeURIComponent(food)}`,
-    );
-  },
-
-  /** Validate a user-supplied Gemini key against Google (read-only). */
-  validateGeminiKey(apiKey: string): Promise<{ valid: boolean }> {
-    return request<{ valid: boolean }>('/gemini/validate', {
-      method: 'POST',
-      body: JSON.stringify({ apiKey }),
-    });
-  },
-};

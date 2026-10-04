@@ -1,8 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { SAFETY_META } from '../pets';
+import { SAFETY_META } from '../domain/pets';
 import { colors, fonts, space } from '../theme';
-import type { FoodSafetyResult } from '../types';
+import type { FoodSafetyResult } from '../domain/types';
 import Reveal from './Reveal';
 import SafetyBadge from './SafetyBadge';
 
