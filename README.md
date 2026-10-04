@@ -234,9 +234,12 @@ curl -X POST http://localhost:3001/api/food-safety/check \
 
 Verdicts: `safe`, `caution`, `unsafe`, `unknown`.
 
-Auth & console endpoints (session cookie): `GET /api/auth/me`,
-`GET /api/auth/:provider`, `POST /api/auth/logout`, `GET|POST /api/me/keys`,
-`PATCH|DELETE /api/me/keys/:id`, `GET /api/me/usage`.
+Sign-in: `GET /api/auth/providers` (public — what this server can offer),
+`GET /api/auth/:provider?next=/path` (starts OAuth; `next` is validated),
+`POST /api/auth/dev-login` (local only), `GET /api/auth/me`,
+`POST /api/auth/logout`.
+Console (session cookie): `GET|POST /api/me/keys`, `PATCH|DELETE /api/me/keys/:id`,
+`GET /api/me/usage`.
 Keyed API: `/api/v1/food-safety/*` (requires `Authorization: Bearer sk-…`).
 
 ## Testing

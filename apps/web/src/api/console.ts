@@ -1,8 +1,20 @@
-import type { ApiKey, AuthUser, CreatedApiKey, QuotaWindow, UsageResponse } from '../domain/types';
+import type {
+  ApiKey,
+  AuthProviders,
+  AuthUser,
+  CreatedApiKey,
+  QuotaWindow,
+  UsageResponse,
+} from '../domain/types';
 import { requestJson } from './client';
 
 /** The session-authenticated endpoints behind the developer console. */
 export const consoleApi = {
+  /** Which sign-in methods this API can offer — drives the login page. */
+  providers(): Promise<AuthProviders> {
+    return requestJson<AuthProviders>('/auth/providers');
+  },
+
   me(): Promise<{ user: AuthUser | null }> {
     return requestJson<{ user: AuthUser | null }>('/auth/me');
   },

@@ -71,7 +71,13 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     return <p className="py-24 text-center text-sm italic text-mist">Checking your session…</p>;
   }
   if (!user) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: `${location.pathname}${location.search}` }}
+        replace
+      />
+    );
   }
   return <>{children}</>;
 }

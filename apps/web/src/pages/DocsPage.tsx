@@ -65,6 +65,18 @@ const DOC_GROUPS: DocGroup[] = [
   "endpoints": { "check": "POST /api/food-safety/check", "…": "…" }
 }`,
       },
+      {
+        method: 'GET',
+        path: '/api/auth/providers',
+        auth: 'public',
+        summary:
+          'Which sign-in methods this server can offer, plus the OAuth callback URL to register.',
+        response: `{
+  "providers": { "github": true, "google": false },
+  "dev": false,
+  "callbackBase": "https://api.your-domain.com"
+}`,
+      },
     ],
   },
   {

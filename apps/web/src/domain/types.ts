@@ -48,6 +48,15 @@ export interface AuthUser {
   role: 'user' | 'admin';
 }
 
+/** What the API can offer as a sign-in method (`GET /api/auth/providers`). */
+export interface AuthProviders {
+  providers: { github: boolean; google: boolean };
+  /** Development-only shortcut sign-in. */
+  dev: boolean;
+  /** Base URL an operator must register as the OAuth callback. */
+  callbackBase: string;
+}
+
 export type QuotaWindow = 'day' | 'month' | 'total';
 
 export interface ApiKey {
