@@ -61,4 +61,23 @@ describe('unsupported species', () => {
     expect(s.calls()).toBe(0);
     expect(result.safety).toBe('unknown');
   });
+
+  test('a BYOK key bypasses a cached unknown and gets a fresh answer', async () => {
+    const cache = new DurableAnswerCache(new AiAnswerRepository(db));
+    // Prime the cache with a stale unknown, as a failed no-key call would.
+    cache.recordAnswer('tiger', {
+      pet: 'tiger',
+      food: 'chicken',
+      safety: 'unknown',
+      message: 'stale',
+      source: 'none',
+    });
+
+    const s = stub('caution');
+    const service = new FoodSafetyService(foodSafetyRepository, [s.source], cache);
+    const result = await service.checkFoodSafety('tiger', 'chicken', { apiKey: 'user-key' });
+
+    expect(s.calls()).toBe(1);
+    expect(result.safety).toBe('caution');
+  });
 });

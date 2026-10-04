@@ -2,11 +2,27 @@
 import { fetchWithTimeout } from '../utils/http';
 import { logger } from '../utils/logger';
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 const GEMINI_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-/** Gemini is a fallback, not a dependency — it never gets more than 8s. */
-const GEMINI_TIMEOUT_MS = 8000;
+/**
+ * Model is configurable, with a fallback so a model retirement on Google's side
+ * never takes AI answers down. `gemini-2.5-flash` is kept only as a fallback for
+ * keys that predate `gemini-3.8-flash`.
+ */
+const GEMINI_MODELS = Array.from(
+  new Set([process.env.GEMINI_MODEL ?? 'gemini-3.8-flash', 'gemini-2.5-flash']),
+);
+
+function generateContentUrl(model: string): string {
+  return `${GEMINI_MODELS_URL}/${model}:generateContent`;
+}
+
+/**
+ * Gemini is a fallback, not a dependency. Gemini 3.x models "think" before
+ * answering, which costs time and tokens, so this budget is generous — a slow
+ * answer is better than a wrong `unknown`.
+ */
+const GEMINI_TIMEOUT_MS = 30000;
 
 /** The slice of Gemini's response envelope that we actually read. */
 interface GeminiResponse {
@@ -95,45 +111,56 @@ export class AIService {
 
       const fullPrompt = `${systemPrompt}\n\n${prompt}`;
 
-      const response = await fetchWithTimeout(GEMINI_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-goog-api-key': apiKey
+      const body = JSON.stringify({
+        contents: [{ parts: [{ text: fullPrompt }] }],
+        generationConfig: {
+          temperature: 0.1,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192,
+          candidateCount: 1,
         },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: fullPrompt
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.1,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 4096,
-            candidateCount: 1
+      });
+
+      let lastStatus = 0;
+
+      for (const model of GEMINI_MODELS) {
+        const response = await fetchWithTimeout(
+          generateContentUrl(model),
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-goog-api-key': apiKey },
+            body,
+          },
+          GEMINI_TIMEOUT_MS,
+        );
+
+        if (response.ok) {
+          const data = (await response.json()) as GeminiResponse;
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (!text) {
+            return this.getFallbackResponse(food, pet);
           }
-        })
-      }, GEMINI_TIMEOUT_MS);
+          logger.debug('gemini answered', { model, byok: Boolean(apiKeyOverride) });
+          return this.parseAIResponse(text, food, pet);
+        }
 
-      if (!response.ok) {
+        lastStatus = response.status;
         const errorText = await response.text();
-        throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+        logger.warn('gemini model unavailable', {
+          model,
+          status: response.status,
+          detail: errorText.slice(0, 200),
+        });
+
+        // 404 means the model was retired / not available to this key — try the
+        // next one. Any other error is real and handled by the catch below.
+        if (response.status !== 404) {
+          throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+        }
       }
 
-      const data = (await response.json()) as GeminiResponse;
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-      if (!text) {
-        return this.getFallbackResponse(food, pet);
-      }
-
-      return this.parseAIResponse(text, food, pet);
+      throw new Error(`Gemini API error: all models unavailable (last status ${lastStatus})`);
     } catch (error) {
       logger.error('gemini request failed', { byok: Boolean(apiKeyOverride), error });
       return this.getFallbackResponse(food, pet);

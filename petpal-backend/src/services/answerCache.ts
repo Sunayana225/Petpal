@@ -17,16 +17,23 @@ export interface AnswerSink {
 /** A sink that can also serve previously stored answers. */
 export interface AnswerStore extends AnswerSink {
   getServable(petKey: string, foodKey: string): FoodSafetyResult | null;
+  /** Only a human-approved answer — used to short-circuit BYOK requests. */
+  getApproved(petKey: string, foodKey: string): FoodSafetyResult | null;
 }
 
 const DEFAULT_TTL_HOURS = 168; // one week
-const UNKNOWN_TTL_HOURS = 24;
+/**
+ * `unknown` is usually a transient — no key configured, a bad key, or an
+ * upstream blip — so it is cached only briefly. A longer TTL would lock a food
+ * out of a fresh (and possibly successful) attempt.
+ */
+const UNKNOWN_TTL_MS = 15 * 60 * 1000;
 
 function answerTtlMs(safety: FoodSafetyResult['safety']): number {
+  if (safety === 'unknown') return UNKNOWN_TTL_MS;
   const configured = Number.parseInt(process.env.AI_ANSWER_TTL_HOURS ?? '', 10);
   const hours = Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_TTL_HOURS;
-  const effective = safety === 'unknown' ? Math.min(hours, UNKNOWN_TTL_HOURS) : hours;
-  return effective * 60 * 60 * 1000;
+  return hours * 60 * 60 * 1000;
 }
 
 function serveUnreviewed(): boolean {
@@ -70,6 +77,15 @@ export class DurableAnswerCache implements AnswerStore {
 
     this.memory.set(key, stored.payload, TTL.ai);
     return stored.payload;
+  }
+
+  /**
+   * A human-approved answer only. A BYOK caller is spending their own quota, so
+   * they should get a fresh answer — a cached guess must not block them.
+   */
+  getApproved(petKey: string, foodKey: string): FoodSafetyResult | null {
+    const stored = this.repo.find(petKey, foodKey);
+    return stored && stored.status === 'approved' ? stored.payload : null;
   }
 
   recordAnswer(petKey: string, result: FoodSafetyResult): void {

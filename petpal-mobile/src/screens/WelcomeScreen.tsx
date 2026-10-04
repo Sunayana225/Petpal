@@ -67,7 +67,7 @@ export default function WelcomeScreen({ onDone }: Props) {
         onDone();
       } else {
         setState('invalid');
-        setMessage('Google rejected that key. Check it and try again.');
+        setMessage('Invalid key — Google rejected it. Check it and try again.');
       }
     } catch {
       setState('invalid');

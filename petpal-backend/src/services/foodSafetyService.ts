@@ -134,9 +134,22 @@ export class FoodSafetyService {
       log.info('unsupported species — falling through to the AI sources', { petLabel });
     }
 
-    // 3. Remote resolution, memoised in-process *and* durably. The durable cache
-    //    is checked first, so a food resolved before — even in a previous process
-    //    — never reaches Gemini again.
+    // 3a. BYOK: the caller is spending their own quota, so never let a cached
+    //     guess (or the in-process cache) block a fresh answer. Only a
+    //     human-approved answer may short-circuit it.
+    if (options.apiKey) {
+      const approved = this.durable?.getApproved(petLabel, foodKey);
+      if (approved) {
+        log.debug('serving approved answer (bypassing live call)');
+        return { ...approved, pet, food };
+      }
+      const fresh = await this.resolveRemotely(petLabel, pet, food, options.apiKey, log);
+      return { ...fresh, pet, food };
+    }
+
+    // 3b. Remote resolution, memoised in-process *and* durably. The durable cache
+    //     is checked first, so a food resolved before — even in a previous process
+    //     — never reaches Gemini again.
     const cacheKey = `${petLabel}|${foodKey}`;
     const { value, fromCache } = await this.answerCache.getOrSet(
       cacheKey,

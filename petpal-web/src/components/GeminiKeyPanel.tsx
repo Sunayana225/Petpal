@@ -40,7 +40,7 @@ export default function GeminiKeyPanel() {
       } else {
         clearGeminiKey();
         setState('invalid');
-        setMessage('Google rejected that key.');
+        setMessage('Invalid key — Google rejected it.');
       }
     } catch (err) {
       setState('invalid');
