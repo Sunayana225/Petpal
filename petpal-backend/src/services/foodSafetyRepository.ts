@@ -27,14 +27,40 @@ interface ManyPetsCategoryMap {
 
 const CATEGORIES: SafetyCategory[] = ['unsafe', 'caution', 'safe'];
 
+/**
+ * The curated dataset ships as `foodSafety.json`; `foodSafety.generated.json`
+ * is the synthetic seed produced by `scripts/generateSeedData.ts`. The curated
+ * file is loaded first so its (vet-sourced) verdicts win any conflict — the
+ * generated rows only ever fill gaps.
+ */
+const DATA_FILES = ['foodSafety.json', 'foodSafety.generated.json'] as const;
+
 function loadLegacyDatabase(): LegacyDatabase {
-  const databasePath = findDataFile('foodSafety.json');
-  if (!databasePath) {
-    logger.warn('data/foodSafety.json not found — falling back to ManyPets data only');
-    return {};
+  const merged: LegacyDatabase = {};
+
+  for (const fileName of DATA_FILES) {
+    const filePath = findDataFile(fileName);
+    if (!filePath) {
+      if (fileName === 'foodSafety.json') {
+        logger.warn('data/foodSafety.json not found — falling back to ManyPets data only');
+      }
+      continue;
+    }
+
+    const data = readJsonFile<LegacyDatabase>(filePath, {});
+    for (const [pet, categories] of Object.entries(data)) {
+      if (!categories) continue;
+      const target = (merged[pet] ??= {});
+      for (const category of CATEGORIES) {
+        const items = categories[category];
+        if (Array.isArray(items)) {
+          target[category] = [...(target[category] ?? []), ...items];
+        }
+      }
+    }
   }
 
-  return readJsonFile<LegacyDatabase>(databasePath, {});
+  return merged;
 }
 
 /**
