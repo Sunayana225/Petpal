@@ -6,7 +6,6 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { isOnboarded, loadGeminiKey, markOnboarded } from './src/lib/geminiKey';
-import BrowseScreen from './src/screens/BrowseScreen';
 import CheckerScreen from './src/screens/CheckerScreen';
 import InfoScreen from './src/screens/InfoScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
@@ -43,7 +42,6 @@ function Tabs() {
       }}
     >
       <Tab.Screen name="Checker" component={CheckerScreen} options={{ tabBarIcon: tabIcon('🐾') }} />
-      <Tab.Screen name="Browse" component={BrowseScreen} options={{ tabBarIcon: tabIcon('📚') }} />
       <Tab.Screen name="Info" component={InfoScreen} options={{ tabBarIcon: tabIcon('ℹ') }} />
     </Tab.Navigator>
   );

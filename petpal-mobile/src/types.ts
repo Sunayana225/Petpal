@@ -29,13 +29,3 @@ export interface FoodSafetyResult {
   requestId?: string;
   processingTime?: string;
 }
-
-export interface CategoryListResponse {
-  pet: string;
-  count: number;
-  safeFoods?: FoodItem[];
-  cautionFoods?: FoodItem[];
-  unsafeFoods?: FoodItem[];
-}
-
-export type FoodCategory = 'safe' | 'caution' | 'unsafe';

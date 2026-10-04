@@ -1,5 +1,5 @@
 import { getGeminiKeySync } from './lib/geminiKey';
-import type { CategoryListResponse, FoodCategory, FoodSafetyResult } from './types';
+import type { FoodSafetyResult } from './types';
 
 /**
  * API base URL.
@@ -64,21 +64,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
 }
 
-function listCategory(category: FoodCategory, pet: string): Promise<CategoryListResponse> {
-  return request<CategoryListResponse>(
-    `/food-safety/${category}/${encodeURIComponent(pet)}`,
-  );
-}
-
 export const api = {
   checkFoodSafety(pet: string, food: string): Promise<FoodSafetyResult> {
     return request<FoodSafetyResult>(
       `/food-safety/check?pet=${encodeURIComponent(pet)}&food=${encodeURIComponent(food)}`,
     );
   },
-  getSafeFoods: (pet: string) => listCategory('safe', pet),
-  getCautionFoods: (pet: string) => listCategory('caution', pet),
-  getUnsafeFoods: (pet: string) => listCategory('unsafe', pet),
 
   /** Validate a user-supplied Gemini key against Google (read-only). */
   validateGeminiKey(apiKey: string): Promise<{ valid: boolean }> {

@@ -6,7 +6,6 @@ API and the same restrained editorial design language as `petpal-web/`.
 ## Screens
 
 - **Checker** — pick a species, enter a food, get a verdict from the same API.
-- **Browse** — the veterinary database by species and safety category.
 - **Info** — how resolution works, the endpoint index, emergency contacts.
 
 ## Running

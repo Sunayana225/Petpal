@@ -3,12 +3,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fonts, space } from '../theme';
 
-const ENDPOINTS: { method: string; path: string }[] = [
+const ENDPOINTS: { method: string; path: string; needsKey?: boolean }[] = [
   { method: 'POST', path: '/api/food-safety/check' },
   { method: 'GET', path: '/api/food-safety/check?pet=&food=' },
-  { method: 'GET', path: '/api/food-safety/search?q=' },
-  { method: 'GET', path: '/api/food-safety/pets' },
-  { method: 'GET', path: '/api/food-safety/stats' },
+  { method: 'GET', path: '/api/food-safety/search?q=', needsKey: true },
+  { method: 'GET', path: '/api/food-safety/pets', needsKey: true },
+  { method: 'GET', path: '/api/food-safety/stats', needsKey: true },
 ];
 
 export default function InfoScreen() {
@@ -36,10 +36,14 @@ export default function InfoScreen() {
         {ENDPOINTS.map((endpoint) => (
           <View key={endpoint.path} style={styles.row}>
             <Text style={styles.method}>{endpoint.method}</Text>
-            <Text style={styles.path}>{endpoint.path}</Text>
+            <Text style={styles.path}>
+              {endpoint.path}
+              {endpoint.needsKey ? '  🔑' : ''}
+            </Text>
           </View>
         ))}
       </View>
+      <Text style={styles.body}>Only /check is public. 🔑 marks endpoints that need an API key.</Text>
 
       <Text style={[styles.eyebrow, styles.section]}>EMERGENCY</Text>
       <Text style={styles.body}>
