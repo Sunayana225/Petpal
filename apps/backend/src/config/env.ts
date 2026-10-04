@@ -69,6 +69,28 @@ export const env = {
       .filter(Boolean);
   },
 
+  /**
+   * `SameSite` for the sign-in cookie. The default (`lax`) suits a same-site
+   * deploy. Use `none` when the web app and this API are on *different* sites
+   * (e.g. the web app on `*.vercel.app`, the API on `*.onrender.com`) — without
+   * it the browser drops the cookie and sign-in silently fails.
+   */
+  get sessionCookieSameSite(): 'lax' | 'strict' | 'none' {
+    const value = (process.env.SESSION_COOKIE_SAMESITE ?? '').toLowerCase();
+    return value === 'strict' || value === 'none' ? value : 'lax';
+  },
+  /**
+   * `Secure` is implied whenever `SameSite=None`: browsers reject a
+   * `SameSite=None` cookie that is not `Secure`, and `Secure` needs HTTPS.
+   */
+  get sessionCookieSecure(): boolean {
+    return this.isProduction || this.sessionCookieSameSite === 'none';
+  },
+  /** Optional: pin the cookie to a parent domain, e.g. `.example.com`. */
+  get sessionCookieDomain(): string | undefined {
+    return process.env.SESSION_COOKIE_DOMAIN || undefined;
+  },
+
   // -- HTTP ------------------------------------------------------------------
 
   /**

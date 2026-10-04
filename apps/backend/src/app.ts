@@ -20,6 +20,7 @@ import { requestId } from './middleware/requestId';
 import { createApiRouter, rootHandler } from './routes';
 import { trackMetrics } from './routes/monitoring';
 import { FoodSafetyService } from './services/foodSafetyService';
+import { logger } from './utils/logger';
 
 /** Re-exported for existing importers; the value lives in `./config/version`. */
 export { API_VERSION };
@@ -92,6 +93,15 @@ export function createApp(): Express {
 
   // Sessions + Passport power the developer console. The store is SQLite, so
   // logins survive a restart.
+  const cookieSameSite = env.sessionCookieSameSite;
+
+  if (cookieSameSite === 'none' && env.corsOrigins.length === 0) {
+    logger.warn(
+      'SESSION_COOKIE_SAMESITE=none without CORS_ORIGIN: the browser will drop the ' +
+        'session cookie and sign-in will look like it worked but leave you signed out',
+    );
+  }
+
   app.use(
     session({
       name: 'petpal.sid',
@@ -99,10 +109,14 @@ export function createApp(): Express {
       secret: env.sessionSecret,
       resave: false,
       saveUninitialized: false,
+      // Trust `X-Forwarded-Proto`, so a `Secure` cookie is still set when TLS is
+      // terminated by the host's proxy rather than by this process.
+      proxy: env.isProduction || env.trustProxy,
       cookie: {
         httpOnly: true,
-        sameSite: 'lax',
-        secure: env.isProduction,
+        sameSite: cookieSameSite,
+        secure: env.sessionCookieSecure,
+        ...(env.sessionCookieDomain ? { domain: env.sessionCookieDomain } : {}),
         maxAge: 30 * 24 * 60 * 60 * 1000,
       },
     }),

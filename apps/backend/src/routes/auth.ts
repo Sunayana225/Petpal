@@ -5,7 +5,8 @@ import { configurePassport, isProviderConfigured, passport, type OAuthProvider }
 import { safeReturnPath } from '../auth/returnTo';
 import { env } from '../config/env';
 import { currentUser } from '../middleware/auth';
-import { userRepository } from '../repositories/userRepository';
+import { userRepository, type User } from '../repositories/userRepository';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -87,12 +88,20 @@ router.post('/dev-login', (req: Request, res: Response, next: NextFunction) => {
     name,
   });
 
-  req.login(user, (error) => {
-    if (error) {
-      next(error);
+  // Rotate the session id on sign-in. A cookie issued before authenticating must
+  // never become an authenticated one — that is session fixation.
+  req.session.regenerate((regenerateError) => {
+    if (regenerateError) {
+      next(regenerateError);
       return;
     }
-    res.json({ user });
+    req.login(user, (error) => {
+      if (error) {
+        next(error);
+        return;
+      }
+      res.json({ user });
+    });
   });
 });
 
@@ -131,15 +140,33 @@ router.get('/:provider/callback', (req: Request, res: Response, next: NextFuncti
     return;
   }
 
-  passport.authenticate(provider, {
-    failureRedirect: `${webAppUrl()}/login?error=oauth`,
-  })(req, res, () => {
-    const session = req.session as SessionWithReturn;
-    const target = safeReturnPath(session.returnTo) ?? DEFAULT_RETURN_PATH;
-    delete session.returnTo;
-    res.redirect(`${webAppUrl()}${target}`);
-  });
-  void next;
+  // A custom callback keeps control of the session: passport does not log the
+  // user in by itself here, so we can rotate the session id *first* and then log
+  // in on the fresh id.
+  passport.authenticate(provider, {}, (error: unknown, user?: User) => {
+    if (error || !user) {
+      logger.warn('oauth sign-in failed', { provider, error });
+      res.redirect(`${webAppUrl()}/login?error=oauth`);
+      return;
+    }
+
+    // Read the destination before regenerating — the old session is discarded.
+    const returnTo = safeReturnPath((req.session as SessionWithReturn).returnTo);
+
+    req.session.regenerate((regenerateError) => {
+      if (regenerateError) {
+        next(regenerateError);
+        return;
+      }
+      req.logIn(user, (loginError) => {
+        if (loginError) {
+          next(loginError);
+          return;
+        }
+        res.redirect(`${webAppUrl()}${returnTo ?? DEFAULT_RETURN_PATH}`);
+      });
+    });
+  })(req, res, next);
 });
 
 export { router as authRouter };

@@ -3,6 +3,14 @@ import type { Express } from 'express';
 
 import { createApp } from '../app';
 
+/** The `petpal.sid` value a response set, if any. */
+function sessionId(response: { headers: Record<string, unknown> }): string | undefined {
+  const raw = response.headers['set-cookie'];
+  const cookies = Array.isArray(raw) ? (raw as string[]) : typeof raw === 'string' ? [raw] : [];
+  const cookie = cookies.find((entry) => entry.startsWith('petpal.sid='));
+  return cookie?.split(';')[0]?.split('=')[1];
+}
+
 describe('auth surface', () => {
   let app: Express;
   const saved = {
@@ -65,6 +73,22 @@ describe('auth surface', () => {
 
     const after = await agent.get('/api/auth/me').expect(200);
     expect(after.body.user).toBeNull();
+  });
+
+  test('signing in rotates the session id (no fixation)', async () => {
+    const agent = request.agent(app);
+
+    const first = await agent.post('/api/auth/dev-login').send({ name: 'First' }).expect(200);
+    const second = await agent.post('/api/auth/dev-login').send({ name: 'Second' }).expect(200);
+
+    const firstId = sessionId(first);
+    const secondId = sessionId(second);
+
+    expect(firstId).toBeTruthy();
+    expect(secondId).toBeTruthy();
+    // A new session id on every sign-in: an id held before authenticating can
+    // never become an authenticated one.
+    expect(secondId).not.toBe(firstId);
   });
 
   test('GET /api/auth/:provider 404s for an unknown provider', async () => {

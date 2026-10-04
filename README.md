@@ -170,6 +170,7 @@ Without an AI key PetPal still works: unknown foods return professional
 | `GEMINI_API_KEY` | Enables the AI fallback (optional) |
 | `ADMIN_TOKEN` | Token for the `/api/admin/*` review queue; unset disables it |
 | `SESSION_SECRET` | Signs session cookies (required in production) |
+| `SESSION_COOKIE_SAMESITE` / `SESSION_COOKIE_DOMAIN` | Cookie scope; set `none` (with `CORS_ORIGIN` and HTTPS) when the web app and the API are on different sites |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth app |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client |
 | `WEB_APP_URL` | Where the browser returns after sign-in |
