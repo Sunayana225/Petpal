@@ -1,4 +1,4 @@
-import type { FoodCategory, SafetyLevel } from './types';
+import type { SafetyLevel } from './types';
 
 export interface PetMeta {
   /** Canonical API key, e.g. `dogs`. */
@@ -26,10 +26,6 @@ export const PETS: PetMeta[] = [
   { key: 'snakes', label: 'Snake', emoji: '🐍', blurb: 'Strict carnivores' },
   { key: 'chickens', label: 'Chicken', emoji: '🐔', blurb: 'Backyard-flock friendly' },
 ];
-
-export const PET_BY_KEY: Record<string, PetMeta> = Object.fromEntries(
-  PETS.map((pet) => [pet.key, pet]),
-);
 
 /**
  * One token per verdict. Shapes and colour are intentionally austere: a thin
@@ -67,10 +63,4 @@ export const SAFETY_META: Record<
     border: 'border-unknown',
     rule: 'bg-unknown',
   },
-};
-
-export const CATEGORY_META: Record<FoodCategory, { label: string; gloss: string }> = {
-  safe: { label: 'Safe', gloss: 'Generally fine in normal amounts.' },
-  caution: { label: 'Caution', gloss: 'Moderation only.' },
-  unsafe: { label: 'Unsafe', gloss: 'Do not feed.' },
 };

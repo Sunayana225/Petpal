@@ -7,7 +7,6 @@ import Header from './components/Header';
 import { setCanonical, trackPageview } from './lib/analytics';
 import { AuthProvider, RequireAuth } from './lib/auth';
 import PageTransition from './motion/PageTransition';
-import BrowsePage from './pages/BrowsePage';
 import DashboardPage from './pages/DashboardPage';
 import DocsPage from './pages/DocsPage';
 import HomePage from './pages/HomePage';
@@ -35,7 +34,6 @@ export default function App() {
             <PageTransition key={location.pathname}>
               <Routes location={location}>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/browse" element={<BrowsePage />} />
                 <Route path="/docs" element={<DocsPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route

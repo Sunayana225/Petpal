@@ -1,12 +1,4 @@
-import type {
-  CategoryListResponse,
-  FoodCategory,
-  FoodSafetyResult,
-  HealthResponse,
-  PetInfo,
-  SearchResponse,
-  StatsResponse,
-} from '../types';
+import type { FoodSafetyResult } from '../types';
 
 /**
  * Base URL for the API.
@@ -108,40 +100,4 @@ export const api = {
       body: JSON.stringify({ apiKey }),
     });
   },
-
-  getSupportedPets(): Promise<PetInfo> {
-    return requestJson<PetInfo>('/food-safety/pets');
-  },
-
-  getStats(): Promise<StatsResponse> {
-    return requestJson<StatsResponse>('/food-safety/stats');
-  },
-
-  search(query: string, pet?: string): Promise<SearchResponse> {
-    return requestJson<SearchResponse>(
-      `/food-safety/search${buildQuery({ q: query, pet })}`,
-    );
-  },
-
-  getSafeFoods(pet: string): Promise<CategoryListResponse> {
-    return listCategory('safe', pet);
-  },
-
-  getCautionFoods(pet: string): Promise<CategoryListResponse> {
-    return listCategory('caution', pet);
-  },
-
-  getUnsafeFoods(pet: string): Promise<CategoryListResponse> {
-    return listCategory('unsafe', pet);
-  },
-
-  health(): Promise<HealthResponse> {
-    return requestJson<HealthResponse>('/health');
-  },
 };
-
-function listCategory(category: FoodCategory, pet: string): Promise<CategoryListResponse> {
-  return requestJson<CategoryListResponse>(
-    `/food-safety/${category}/${encodeURIComponent(pet)}`,
-  );
-}

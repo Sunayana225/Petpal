@@ -7,7 +7,6 @@ import { EASE } from '../motion/tokens';
 
 const LINKS = [
   { to: '/', label: 'Checker' },
-  { to: '/browse', label: 'Browse' },
   { to: '/docs', label: 'API' },
 ];
 

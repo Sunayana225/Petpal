@@ -37,43 +37,6 @@ export interface FoodSafetyResult {
   processingTime?: string;
 }
 
-export interface PetInfo {
-  supportedPets: string[];
-  count: number;
-}
-
-export interface CategoryListResponse {
-  pet: string;
-  count: number;
-  safeFoods?: FoodItem[];
-  cautionFoods?: FoodItem[];
-  unsafeFoods?: FoodItem[];
-}
-
-export interface SearchResponse {
-  query: string;
-  pet: string | null;
-  results: FoodItem[];
-  count: number;
-}
-
-export interface StatsResponse {
-  stats: Record<string, Record<string, number>>;
-  supportedPets: string[];
-  totalEntries: number;
-  timestamp: string;
-}
-
-export interface HealthResponse {
-  status: string;
-  message: string;
-  timestamp: string;
-  version: string;
-  uptime: number;
-}
-
-export type FoodCategory = 'safe' | 'caution' | 'unsafe';
-
 // ---- Developer console ------------------------------------------------------
 
 export interface AuthUser {
