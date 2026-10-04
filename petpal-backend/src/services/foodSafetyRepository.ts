@@ -38,6 +38,7 @@ const CATEGORIES: SafetyCategory[] = ['unsafe', 'caution', 'safe'];
 const DATA_FILES = [
   'foodSafety.json',
   'foodSafety.biovet.json',
+  'foodSafety.growli.json',
   'foodSafety.generated.json',
 ] as const;
 
