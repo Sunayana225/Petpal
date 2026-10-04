@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import type { Db } from '../db/database';
+import { getDb, type Db } from '../db/database';
 
 export type Role = 'user' | 'admin';
 
@@ -105,4 +105,12 @@ export class UserRepository {
 
     return this.findByProvider(profile.provider, profile.providerUserId)!;
   }
+}
+
+let singleton: UserRepository | null = null;
+
+/** Lazily-built shared repository — importing this module opens no database. */
+export function userRepository(): UserRepository {
+  if (!singleton) singleton = new UserRepository(getDb());
+  return singleton;
 }

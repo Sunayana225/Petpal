@@ -1,35 +1,12 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { Request, Response, Router } from 'express';
 
+import { requireAdmin } from '../middleware/auth';
 import type { AnswerStatus } from '../repositories/aiAnswerRepository';
 import { answerCache } from '../services/answerCache';
 
 const router = Router();
 
 const STATUSES: AnswerStatus[] = ['pending', 'approved', 'rejected'];
-
-/**
- * Guard for the review queue.
- *
- * Mutating the safety dataset is an operational action, so it must never be
- * public. A logged-in admin (once auth lands) or the `ADMIN_TOKEN` is accepted;
- * with neither configured, every request is refused — it fails closed.
- */
-function requireAdmin(req: Request, res: Response, next: NextFunction): void {
-  const expected = process.env.ADMIN_TOKEN;
-  const provided = req.header('x-admin-token');
-  const sessionUser = (req as Request & { user?: { role?: string } }).user;
-  const isAdminSession = sessionUser?.role === 'admin';
-
-  if (isAdminSession || (expected && provided === expected)) {
-    next();
-    return;
-  }
-
-  res.status(401).json({
-    error: 'Unauthorized',
-    message: 'A valid admin token or admin session is required.',
-  });
-}
 
 /**
  * GET /api/admin/queue[?status=pending]

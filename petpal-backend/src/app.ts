@@ -1,9 +1,14 @@
 import cors from 'cors';
 import express, { Express, NextFunction, Request, Response } from 'express';
+import session from 'express-session';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 
+import { configurePassport, passport } from './auth/passport';
+import { SqliteSessionStore } from './auth/sessionStore';
+import { getDb } from './db/database';
+import { checkOrigin } from './middleware/auth';
 import {
   globalErrorHandler,
   healthCheck,
@@ -12,6 +17,7 @@ import {
 } from './middleware/errorHandler';
 import { checkFoodSafetyHandler, foodSafetyRouter } from './routes/foodSafety';
 import { adminRouter } from './routes/admin';
+import { authRouter } from './routes/auth';
 import { monitoringRouter, trackMetrics } from './routes/monitoring';
 import { SUPPORTED_PET_KEYS } from './utils/normalization';
 import { API_VERSION } from './version';
@@ -40,6 +46,14 @@ function requestId(req: Request, res: Response, next: NextFunction): void {
 
 function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+/** Sessions must be signed with a real secret in production. */
+function sessionSecret(env: string): string {
+  const secret = process.env.SESSION_SECRET;
+  if (secret) return secret;
+  if (env === 'production') throw new Error('SESSION_SECRET must be set in production');
+  return 'petpal-dev-secret-change-me';
 }
 
 /**
@@ -106,6 +120,28 @@ export function createApp(): Express {
   app.use(requestId);
   app.use(trackMetrics);
 
+  // Sessions + Passport power the developer console. The store is SQLite, so
+  // logins survive a restart.
+  app.use(
+    session({
+      name: 'petpal.sid',
+      store: new SqliteSessionStore(getDb()),
+      secret: sessionSecret(NODE_ENV),
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: NODE_ENV === 'production',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      },
+    }),
+  );
+  configurePassport();
+  app.use(passport.initialize());
+  app.use(passport.session());
+  app.use('/api/', checkOrigin);
+
   if (NODE_ENV === 'production') {
     app.use((_req: Request, res: Response, next: NextFunction) => {
       res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -117,6 +153,7 @@ export function createApp(): Express {
   }
 
   // ---- Routes -------------------------------------------------------------
+  app.use('/api/auth', authRouter);
   app.use('/api/food-safety', foodSafetyRouter);
   app.use('/api/monitoring', monitoringRouter);
   app.use('/api/admin', adminRouter);
