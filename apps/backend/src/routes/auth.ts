@@ -1,6 +1,8 @@
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import type { SessionData } from 'express-session';
 
 import { configurePassport, isProviderConfigured, passport, type OAuthProvider } from '../auth/passport';
+import { safeReturnPath } from '../auth/returnTo';
 import { env } from '../config/env';
 import { currentUser } from '../middleware/auth';
 import { userRepository } from '../repositories/userRepository';
@@ -9,6 +11,12 @@ const router = Router();
 
 // Register strategies as soon as this router is imported.
 configurePassport();
+
+/** Where a signed-in user lands when they did not ask for anywhere specific. */
+const DEFAULT_RETURN_PATH = '/dashboard';
+
+/** The session carries the post-sign-in destination across the OAuth round trip. */
+type SessionWithReturn = SessionData & { returnTo?: string };
 
 function webAppUrl(): string {
   return env.webAppUrl;
@@ -25,6 +33,24 @@ function isProvider(value: string): value is OAuthProvider {
 function devAuthEnabled(): boolean {
   return env.devAuthEnabled;
 }
+
+/**
+ * Which sign-in methods this server can actually offer.
+ *
+ * The client calls this before rendering buttons, so it never shows a provider
+ * that would answer 503, and can tell the operator exactly which callback URL to
+ * register. Defined before `/:provider` so it is not swallowed by that route.
+ */
+router.get('/providers', (_req: Request, res: Response) => {
+  res.json({
+    providers: {
+      github: isProviderConfigured('github'),
+      google: isProviderConfigured('google'),
+    },
+    dev: devAuthEnabled(),
+    callbackBase: env.oauthCallbackBase,
+  });
+});
 
 /** Who am I? Hydrates the SPA; returns `null` when signed out. */
 router.get('/me', (req: Request, res: Response) => {
@@ -86,6 +112,11 @@ router.get('/:provider', (req: Request, res: Response, next: NextFunction) => {
     return;
   }
 
+  // Remember where to come back to. Kept on the session rather than in the
+  // `state` parameter, so it needs no verification of its own — and it is
+  // validated again on the way out, because a session can be reused.
+  (req.session as SessionWithReturn).returnTo = safeReturnPath(req.query.next) ?? undefined;
+
   passport.authenticate(provider, {
     scope: provider === 'github' ? ['user:email'] : ['profile', 'email'],
   })(req, res, next);
@@ -103,7 +134,10 @@ router.get('/:provider/callback', (req: Request, res: Response, next: NextFuncti
   passport.authenticate(provider, {
     failureRedirect: `${webAppUrl()}/login?error=oauth`,
   })(req, res, () => {
-    res.redirect(`${webAppUrl()}/dashboard`);
+    const session = req.session as SessionWithReturn;
+    const target = safeReturnPath(session.returnTo) ?? DEFAULT_RETURN_PATH;
+    delete session.returnTo;
+    res.redirect(`${webAppUrl()}${target}`);
   });
   void next;
 });
