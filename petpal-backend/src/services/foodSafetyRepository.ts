@@ -28,12 +28,18 @@ interface ManyPetsCategoryMap {
 const CATEGORIES: SafetyCategory[] = ['unsafe', 'caution', 'safe'];
 
 /**
- * The curated dataset ships as `foodSafety.json`; `foodSafety.generated.json`
- * is the synthetic seed produced by `scripts/generateSeedData.ts`. The curated
- * file is loaded first so its (vet-sourced) verdicts win any conflict — the
- * generated rows only ever fill gaps.
+ * Data sources, most trustworthy first — earlier files win conflicts, so a
+ * generated row can never override a vet-sourced verdict.
+ *
+ *  - `foodSafety.json`            curated, compiled into this repo
+ *  - `foodSafety.biovet.json`     BioVet vet-reviewed set (CC BY 4.0)
+ *  - `foodSafety.generated.json`  synthetic seed, source "AI (generated)"
  */
-const DATA_FILES = ['foodSafety.json', 'foodSafety.generated.json'] as const;
+const DATA_FILES = [
+  'foodSafety.json',
+  'foodSafety.biovet.json',
+  'foodSafety.generated.json',
+] as const;
 
 function loadLegacyDatabase(): LegacyDatabase {
   const merged: LegacyDatabase = {};
