@@ -51,6 +51,9 @@ export default function Footer() {
           <span>Veterinary-sourced · AI-assisted</span>
           <span>Not a substitute for professional veterinary care</span>
         </div>
+        <p className="mt-4 text-[10px] text-mist">
+          Data: BioVet veterinary clinic network (bio.vet) and Growli/ASPCA plant table, CC BY 4.0.
+        </p>
       </div>
     </footer>
   );

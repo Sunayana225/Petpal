@@ -420,7 +420,6 @@ const TOC = [
   { id: 'errors', label: 'Errors' },
   { id: 'limits', label: 'Limits & quotas' },
   { id: 'examples', label: 'Code examples' },
-  { id: 'licence', label: 'Data & licence' },
 ];
 
 function Code({ children }: { children: string }) {
@@ -740,22 +739,6 @@ r = requests.get(
 )
 data = r.json()
 print(data["safety"], data["source"])  # safe database`}</Code>
-        </Section>
-
-        <Section id="licence" eyebrow="10" title="Data & licence">
-          <p>
-            Answers combine the repo’s curated dataset, the{' '}
-            <strong className="text-charcoal">BioVet</strong> pet-food-safety dataset and the{' '}
-            <strong className="text-charcoal">Growli/ASPCA</strong> plant table (both CC BY 4.0), plus
-            a synthetic seed clearly tagged{' '}
-            <code className="font-mono text-charcoal">AI (generated)</code>. The synthetic rows are
-            not veterinary-verified; the API always tells you the source so you can judge it.
-          </p>
-          <p className="text-xs text-mist">
-            This API provides general information and is not a substitute for professional veterinary
-            care. If a pet has eaten something dangerous, contact a veterinarian or a poison helpline
-            immediately.
-          </p>
         </Section>
       </div>
     </div>
