@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Reveal } from '../motion/primitives';
 import { SAFETY_META } from '../domain/pets';
@@ -510,6 +511,27 @@ function EndpointCard({ doc }: { doc: EndpointDoc }) {
   );
 }
 
+/**
+ * The one call to action on this page: create an API key in the console, where
+ * the key, its quota and its usage live. The `/tokens` route is guarded, so a
+ * signed-out visitor is sent to sign in first.
+ */
+function CreateKeyCta() {
+  return (
+    <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+      <Link
+        to="/tokens"
+        className="border border-charcoal bg-charcoal px-6 py-3 text-[12px] uppercase tracking-wide-cap text-parchment transition-colors duration-500 hover:bg-forest"
+      >
+        Create an API key
+      </Link>
+      <span className="text-[13px] text-mist">
+        Opens the console — sign in, name a key, copy it once.
+      </span>
+    </div>
+  );
+}
+
 export default function DocsPage() {
   return (
     <div className="mx-auto max-w-[1100px] px-5 py-20 sm:px-10">
@@ -526,6 +548,10 @@ export default function DocsPage() {
           Every endpoint below shows its exact parameters, a real request, and the response you get
           back — enough to build a client without guessing.
         </p>
+      </Reveal>
+
+      <Reveal delay={0.12}>
+        <CreateKeyCta />
       </Reveal>
 
       <Reveal delay={0.15}>
@@ -624,10 +650,11 @@ export default function DocsPage() {
           </p>
           <Code>{`Authorization: Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Code>
           <p>
-            Create keys in the console (<a href="/login" className="link-line text-charcoal">sign in</a>{' '}
-            → Tokens). A key is <strong className="text-charcoal">shown once</strong> — we store only
-            a hash, so copy it somewhere safe. Send it as a header, never in a query string.
+            Create keys in the console. A key is{' '}
+            <strong className="text-charcoal">shown once</strong> — we store only a hash, so copy it
+            somewhere safe. Send it as a header, never in a query string.
           </p>
+          <CreateKeyCta />
           <p>
             <strong className="text-charcoal">Bring your own Gemini key (optional).</strong> Add{' '}
             <code className="font-mono text-charcoal">X-Gemini-Key: AIza…</code> and the AI fallback
