@@ -47,6 +47,15 @@ authoritative layer, so the more cautious verdict still wins on any conflict.
 Set `ADMIN_TOKEN` in the environment; without it, every `/api/admin/*` request is
 refused (it fails closed).
 
+## Bring your own AI key (BYOK)
+
+Visitors can supply their own Gemini key from the checker. It is kept in
+`sessionStorage` only, validated against Google when saved (`POST /api/gemini/validate`,
+a cheap read-only call), and sent as `X-Gemini-Key` on each check — used for that one
+request, never stored or logged. A key that fails returns `unknown` and is **not**
+written to the shared answer cache, so a bad key cannot poison everyone else's results.
+Valid AI answers *are* cached and shared, exactly like the server key's.
+
 ## Developer platform (accounts, API keys, console)
 
 Sign in with GitHub or Google, then create keys in the console (`/login` →

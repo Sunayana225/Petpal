@@ -19,6 +19,7 @@ import {
 import { checkFoodSafetyHandler, foodSafetyRouter } from './routes/foodSafety';
 import { adminRouter } from './routes/admin';
 import { authRouter } from './routes/auth';
+import { geminiRouter } from './routes/gemini';
 import { meRouter } from './routes/keys';
 import { monitoringRouter, trackMetrics } from './routes/monitoring';
 import { SUPPORTED_PET_KEYS } from './utils/normalization';
@@ -30,6 +31,7 @@ export { API_VERSION };
 const DEV_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:19006',
+  'http://localhost:8081',
   'exp://localhost:19000',
   'http://127.0.0.1:3000',
 ];
@@ -156,6 +158,7 @@ export function createApp(): Express {
 
   // ---- Routes -------------------------------------------------------------
   app.use('/api/auth', authRouter);
+  app.use('/api/gemini', geminiRouter);
   app.use('/api/me', meRouter);
   app.use('/api/food-safety', foodSafetyRouter);
   app.use('/api/monitoring', monitoringRouter);

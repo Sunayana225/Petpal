@@ -45,11 +45,14 @@ export const checkFoodSafetyHandler = asyncHandler(
     // POST bodies use `pet`; the original API used `?animal=`.
     const pet = String(req.body?.pet ?? req.query?.pet ?? req.query?.animal ?? '').trim();
     const food = String(req.body?.food ?? req.query?.food ?? '').trim();
+    // Optional BYOK: a caller's own Gemini key, used for this request only.
+    // Deliberately never logged.
+    const apiKey = req.header('x-gemini-key')?.trim() || undefined;
     const startTime = Date.now();
 
     console.log(`[FOOD_SAFETY_CHECK] Pet: ${pet}, Food: ${food}, IP: ${req.ip}`);
 
-    const result = await foodSafetyService.checkFoodSafety(pet, food);
+    const result = await foodSafetyService.checkFoodSafety(pet, food, apiKey ? { apiKey } : {});
     const duration = Date.now() - startTime;
 
     console.log(`[FOOD_SAFETY_CHECK] Completed in ${duration}ms, Safety: ${result.safety}`);

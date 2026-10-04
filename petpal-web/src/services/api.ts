@@ -90,10 +90,23 @@ export async function requestJson<T>(
 
 export const api = {
   /** The headline check — GET so results are linkable and cacheable. */
-  checkFoodSafety(pet: string, food: string): Promise<FoodSafetyResult> {
+  checkFoodSafety(
+    pet: string,
+    food: string,
+    geminiKey?: string | null,
+  ): Promise<FoodSafetyResult> {
     return requestJson<FoodSafetyResult>(
       `/food-safety/check${buildQuery({ pet, food })}`,
+      geminiKey ? { headers: { 'X-Gemini-Key': geminiKey } } : {},
     );
+  },
+
+  /** Validate a user-supplied Gemini key (cheap, read-only Google call). */
+  validateGeminiKey(apiKey: string): Promise<{ valid: boolean }> {
+    return requestJson<{ valid: boolean }>('/gemini/validate', {
+      method: 'POST',
+      body: JSON.stringify({ apiKey }),
+    });
   },
 
   getSupportedPets(): Promise<PetInfo> {

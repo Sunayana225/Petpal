@@ -1,10 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState, type FormEvent } from 'react';
 
+import { getGeminiKey } from '../lib/geminiKey';
 import { EASE } from '../motion/tokens';
 import { PETS } from '../pets';
 import { api, ApiError } from '../services/api';
 import type { FoodSafetyResult } from '../types';
+import GeminiKeyPanel from './GeminiKeyPanel';
 import ResultCard from './ResultCard';
 
 const QUICK_TRIES = ['chocolate', 'apple', 'grapes', 'carrot'];
@@ -31,7 +33,7 @@ export default function CheckForm() {
     setResult(null);
 
     try {
-      setResult(await api.checkFoodSafety(pet, trimmed));
+      setResult(await api.checkFoodSafety(pet, trimmed, getGeminiKey()));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.');
     } finally {
@@ -128,6 +130,8 @@ export default function CheckForm() {
           </div>
         </div>
       </form>
+
+      <GeminiKeyPanel />
 
       <AnimatePresence mode="wait">
         {error && (

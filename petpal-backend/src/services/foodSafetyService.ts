@@ -88,7 +88,11 @@ export class FoodSafetyService {
    * rely on that (the test suite asserts `'DOG'` stays `'DOG'`) — while every
    * lookup internally works on normalised keys.
    */
-  async checkFoodSafety(pet: string, food: string): Promise<FoodSafetyResult> {
+  async checkFoodSafety(
+    pet: string,
+    food: string,
+    options: { apiKey?: string } = {},
+  ): Promise<FoodSafetyResult> {
     const petKey = normalizePetKey(pet);
     const foodKey = normalizeFoodKey(food);
 
@@ -124,7 +128,9 @@ export class FoodSafetyService {
       (result) => (result.safety === 'unknown' ? TTL.unknown : TTL.ai),
       () => {
         const stored = this.durable?.getServable(petKey, foodKey);
-        return stored ? Promise.resolve(stored) : this.resolveRemotely(petKey, pet, food);
+        return stored
+          ? Promise.resolve(stored)
+          : this.resolveRemotely(petKey, pet, food, options.apiKey);
       },
     );
 
@@ -140,13 +146,13 @@ export class FoodSafetyService {
     petKey: PetKey,
     pet: string,
     food: string,
+    apiKey?: string,
   ): Promise<FoodSafetyResult> {
     for (const source of this.sources) {
       try {
-        const result = await source.resolve(petKey, pet, food);
+        const result = await source.resolve(petKey, pet, food, apiKey);
         if (result) {
-          // Persist so the same question never spends a second remote call.
-          this.durable?.recordAnswer(petKey, result);
+          this.persist(petKey, result, apiKey);
           return result;
         }
       } catch (error) {
@@ -162,8 +168,18 @@ export class FoodSafetyService {
       source: 'none',
     };
     // Remember the dead end too — re-asking Gemini won't change the answer.
-    this.durable?.recordAnswer(petKey, fallback);
+    this.persist(petKey, fallback, apiKey);
     return fallback;
+  }
+
+  /**
+   * Remember a remote answer so the same question never spends a second call.
+   * A user-supplied key that failed (yielding `unknown`) is deliberately *not*
+   * written, so a bad BYOK key cannot poison the shared cache for everyone.
+   */
+  private persist(petKey: PetKey, result: FoodSafetyResult, apiKey?: string): void {
+    if (apiKey && result.safety === 'unknown') return;
+    this.durable?.recordAnswer(petKey, result);
   }
 
   private fromDatabase(record: IndexedFood, pet: string, food: string): FoodSafetyResult {

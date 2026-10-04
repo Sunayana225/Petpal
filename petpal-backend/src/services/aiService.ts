@@ -2,6 +2,7 @@
 import { fetchWithTimeout } from '../utils/http';
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMINI_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /** Gemini is a fallback, not a dependency — it never gets more than 8s. */
 const GEMINI_TIMEOUT_MS = 8000;
@@ -40,28 +41,54 @@ export interface AIFoodSafetyResponse {
 }
 
 export class AIService {
-  private static isConfigured(): boolean {
-    return !!process.env.GEMINI_API_KEY;
+  /**
+   * Resolve the key to use: a caller-supplied (BYOK) key takes precedence over
+   * the server's own. Used for this call only — never stored or logged.
+   */
+  private static resolveKey(override?: string): string | undefined {
+    const candidate = override?.trim() || process.env.GEMINI_API_KEY;
+    return candidate || undefined;
   }
 
-  private static getApiKey(): string | undefined {
-    return process.env.GEMINI_API_KEY;
+  /** Whether the server itself has a Gemini key configured. */
+  static isConfigured(): boolean {
+    return Boolean(process.env.GEMINI_API_KEY);
   }
 
-  static async getFoodSafetyAdvice(food: string, pet: string): Promise<AIFoodSafetyResponse> {
-    // If Gemini is not configured, return a helpful fallback
-    if (!this.isConfigured()) {
-      console.log('Gemini API Key not configured');
+  /**
+   * Check a user-supplied key against Gemini's model list. This is a cheap,
+   * read-only call — it spends no generation quota and returns `false` for any
+   * non-2xx response or network error.
+   */
+  static async validateApiKey(apiKey: string): Promise<boolean> {
+    const key = apiKey.trim();
+    if (!key) return false;
+
+    try {
+      const response = await fetchWithTimeout(
+        `${GEMINI_MODELS_URL}?pageSize=1`,
+        { method: 'GET', headers: { 'X-goog-api-key': key } },
+        GEMINI_TIMEOUT_MS,
+      );
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  static async getFoodSafetyAdvice(
+    food: string,
+    pet: string,
+    apiKeyOverride?: string,
+  ): Promise<AIFoodSafetyResponse> {
+    const apiKey = this.resolveKey(apiKeyOverride);
+
+    // Nothing to call with — return helpful guidance instead of erroring.
+    if (!apiKey) {
       return this.getFallbackResponse(food, pet);
     }
 
     try {
-      const apiKey = this.getApiKey();
-      if (!apiKey) {
-        console.log('No API key found, falling back');
-        return this.getFallbackResponse(food, pet);
-      }
-
       const prompt = this.buildPrompt(food, pet);
       const systemPrompt = "You are a veterinary nutrition expert. Provide accurate, evidence-based information about pet food safety. Always err on the side of caution and recommend consulting a veterinarian for specific cases.";
 

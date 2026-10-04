@@ -16,8 +16,16 @@ export interface AnswerSource {
   /**
    * Try to answer `food` for `pet`. Return `null` to defer to the next source.
    * Implementations may throw on failure; the caller treats that as `null`.
+   *
+   * `apiKey` is an optional caller-supplied (BYOK) credential used for this
+   * call only.
    */
-  resolve(petKey: PetKey, pet: string, food: string): Promise<FoodSafetyResult | null>;
+  resolve(
+    petKey: PetKey,
+    pet: string,
+    food: string,
+    apiKey?: string,
+  ): Promise<FoodSafetyResult | null>;
 }
 
 /**
@@ -61,8 +69,13 @@ export class OpenPetFoodFactsSource implements AnswerSource {
 export class AiAnswerSource implements AnswerSource {
   readonly source = 'ai' as const;
 
-  async resolve(petKey: PetKey, pet: string, food: string): Promise<FoodSafetyResult | null> {
-    const ai = await AIService.getFoodSafetyAdvice(food, petKey);
+  async resolve(
+    petKey: PetKey,
+    pet: string,
+    food: string,
+    apiKey?: string,
+  ): Promise<FoodSafetyResult | null> {
+    const ai = await AIService.getFoodSafetyAdvice(food, petKey, apiKey);
 
     return {
       pet,

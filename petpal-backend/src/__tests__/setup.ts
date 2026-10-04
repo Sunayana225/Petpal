@@ -29,6 +29,8 @@ jest.setTimeout(10000);
 // Mock external API calls for testing
 jest.mock('../services/aiService', () => ({
   AIService: {
+    isConfigured: jest.fn().mockReturnValue(false),
+    validateApiKey: jest.fn().mockResolvedValue(true),
     getFoodSafetyAdvice: jest.fn().mockResolvedValue({
       food: 'test-food',
       pet: 'test-pet',
