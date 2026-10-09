@@ -15,6 +15,12 @@
     "test": "npm run test --workspace @petpal/backend && npm run test --workspace @petpal/web",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "test:e2e": "playwright test",
+    "test:load": "npm run build --workspace @petpal/backend && node scripts/load-test.cjs",
+    "audit:backend": "node scripts/audit-backend.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0"
   }
 }
