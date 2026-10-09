@@ -6,9 +6,11 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { API_VERSION, createApp } from './app';
-import { env } from './config/env';
+import { env, validateEnvironment } from './config/env';
+import { closeDb } from './db/database';
 import { logger } from './utils/logger';
 
+validateEnvironment();
 const PORT = env.port;
 const NODE_ENV = env.nodeEnv;
 
@@ -27,7 +29,10 @@ const server: Server = app.listen(PORT, '0.0.0.0', () => {
  * Drain in-flight requests before exiting so a deploy doesn't cut off anyone
  * mid-response. A hard 10s cap stops a stuck socket from blocking the rollout.
  */
+let shuttingDown = false;
 function shutdown(signal: string): void {
+  if (shuttingDown) return;
+  shuttingDown = true;
   logger.info('shutting down gracefully', { signal });
 
   const forceExit = setTimeout(() => {
@@ -42,6 +47,8 @@ function shutdown(signal: string): void {
       process.exit(1);
     }
     logger.info('shutdown complete');
+    clearTimeout(forceExit);
+    closeDb();
     process.exit(0);
   });
 
