@@ -5,6 +5,7 @@ import { API_VERSION } from '../config/version';
 import { logger } from '../utils/logger';
 
 export interface AppError extends Error {
+  type?: string;
   statusCode?: number;
   isOperational?: boolean;
 }
@@ -30,7 +31,7 @@ export const logError = (error: AppError, req?: Request) => {
     requestId: (req?.res?.locals?.requestId as string | undefined) ?? undefined,
     ...(req && {
       method: req.method,
-      url: req.url,
+      url: req.url.split('?')[0],
       ip: req.ip,
       userAgent: req.get?.('User-Agent'),
       // Never log request bodies: they can carry keys or personal data.
@@ -62,6 +63,14 @@ export const globalErrorHandler = (
   res: Response,
   _next: NextFunction,
 ) => {
+  if (res.headersSent) {
+    _next(error);
+    return;
+  }
+  if (error.type === 'entity.parse.failed') {
+    error.message = 'Malformed request body.';
+    error.stack = undefined;
+  }
   // Set default error values
   error.statusCode = error.statusCode || 500;
   error.isOperational = error.isOperational !== undefined ? error.isOperational : false;
@@ -94,7 +103,7 @@ export const globalErrorHandler = (
 
 // 404 handler
 export const notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
-  const error = new CustomError(`Route ${req.originalUrl} not found`, 404);
+  const error = new CustomError(`Route ${req.path} not found`, 404);
   next(error);
 };
 
@@ -112,8 +121,8 @@ export const rateLimitHandler = (req: Request, res: Response) => {
   const error = {
     error: 'Too Many Requests',
     message: 'Too many requests from this IP, please try again later.',
-    retryAfter: '15 minutes',
-    requestId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    retryAfter: res.getHeader('Retry-After') ?? Math.ceil(env.rateLimitWindowMs / 1000),
+    requestId: res.locals.requestId,
     timestamp: new Date().toISOString()
   };
 
@@ -138,7 +147,7 @@ export const healthCheck = (req: Request, res: Response) => {
     services: {
       gemini: Boolean(env.geminiApiKey)
     },
-    requestId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    requestId: res.locals.requestId
   };
   
   res.json(healthInfo);
