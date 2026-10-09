@@ -18,6 +18,7 @@ import {
   rateLimitHandler,
 } from './middleware/errorHandler';
 import { requestId } from './middleware/requestId';
+import { apiContract } from './middleware/apiContract';
 import { errorEnvelope } from './middleware/errorEnvelope';
 import { createApiRouter, rootHandler } from './routes';
 import { trackMetrics } from './routes/monitoring';
@@ -43,6 +44,7 @@ export function createApp(): Express {
   const app = express();
   app.disable('x-powered-by');
   app.use(requestId);
+  app.use((_req, res, next) => { res.set('X-API-Version', API_VERSION); next(); });
   app.use(errorEnvelope);
   app.use(trackMetrics);
 
@@ -70,6 +72,16 @@ export function createApp(): Express {
     }),
   );
 
+  app.use(
+    cors({
+      origin: env.corsOrigins,
+      credentials: true,
+      optionsSuccessStatus: 200,
+      exposedHeaders: ['X-Request-Id', 'X-API-Version', 'ETag', 'X-Dataset-Revision', 'Link', 'Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
+      maxAge: 600,
+    }),
+  );
+
   const limiter = rateLimit({
     windowMs: env.rateLimitWindowMs,
     max: env.rateLimitMax,
@@ -87,14 +99,8 @@ export function createApp(): Express {
     app.use(morgan(':method :safe-path :status :response-time ms'));
   }
 
-  app.use(
-    cors({
-      origin: env.corsOrigins,
-      credentials: true,
-      optionsSuccessStatus: 200,
-    }),
-  );
-  app.use(express.json({ limit: '100kb' }));
+  app.use('/api', apiContract);
+  app.use(express.json({ limit: '100kb', inflate: false }));
   app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
   // Sessions + Passport power the developer console. The store is SQLite, so

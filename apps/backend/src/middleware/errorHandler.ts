@@ -46,6 +46,11 @@ const STATUS_LABELS: Record<number, string> = {
   401: 'Unauthorized',
   403: 'Forbidden',
   404: 'Not Found',
+  405: 'Method Not Allowed',
+  406: 'Not Acceptable',
+  412: 'Precondition Failed',
+  414: 'URI Too Long',
+  415: 'Unsupported Media Type',
   409: 'Conflict',
   413: 'Payload Too Large',
   429: 'Too Many Requests',
@@ -67,6 +72,7 @@ export const globalErrorHandler = (
     _next(error);
     return;
   }
+  if (error.name === 'CacheCapacityError') { error.statusCode = 503; error.isOperational = true; res.set('Retry-After', '1'); }
   if (error.type === 'entity.parse.failed') {
     error.message = 'Malformed request body.';
     error.stack = undefined;
