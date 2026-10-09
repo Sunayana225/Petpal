@@ -69,7 +69,7 @@ describe('auth surface', () => {
     const me = await agent.get('/api/auth/me').expect(200);
     expect(me.body.user).toHaveProperty('name', 'Session Tester');
 
-    await agent.post('/api/auth/logout').expect(200);
+    await agent.post('/api/auth/logout').set('x-csrf-token', login.body.csrfToken).expect(200);
 
     const after = await agent.get('/api/auth/me').expect(200);
     expect(after.body.user).toBeNull();

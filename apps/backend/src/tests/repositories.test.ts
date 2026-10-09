@@ -45,6 +45,7 @@ describe('repositories', () => {
           provider: 'google',
           providerUserId: '7',
           email: 'boss@example.com',
+          emailVerified: true,
         });
         expect(user.role).toBe('admin');
       } finally {
