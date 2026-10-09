@@ -4,6 +4,8 @@ For a full server walkthrough with DNS, Docker installation, Caddy HTTPS, OAuth,
 
 The web client deploys to Vercel. The API is a long-running Docker service with a persistent local SQLite volume. [Vercel does not support this local SQLite persistence model](https://vercel.com/kb/guide/is-sqlite-supported-in-vercel). This package does not create a hosting account, purchase a plan, register domains or configure OAuth applications.
 
+For browser-based hosting from Windows, see [Render and Railway deployment](RENDER-RAILWAY-DEPLOYMENT.md).
+
 ## 1. Configure the API
 
 Copy `apps/backend/.env.production.example` to root `.env.production` for Docker Compose. Generate SESSION_SECRET with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`; place the output in the private environment file. Do not commit it.
