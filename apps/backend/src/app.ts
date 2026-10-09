@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 
 import { configurePassport, passport } from './auth/passport';
 import { SqliteSessionStore } from './auth/sessionStore';
+import { enforceSession, csrfProtection } from './auth/security';
 import { env } from './config/env';
 import { API_VERSION } from './config/version';
 import { getDb } from './db/database';
@@ -17,6 +18,7 @@ import {
   rateLimitHandler,
 } from './middleware/errorHandler';
 import { requestId } from './middleware/requestId';
+import { errorEnvelope } from './middleware/errorEnvelope';
 import { createApiRouter, rootHandler } from './routes';
 import { trackMetrics } from './routes/monitoring';
 import { FoodSafetyService } from './services/foodSafetyService';
@@ -39,6 +41,10 @@ export { API_VERSION };
  */
 export function createApp(): Express {
   const app = express();
+  app.disable('x-powered-by');
+  app.use(requestId);
+  app.use(errorEnvelope);
+  app.use(trackMetrics);
 
   // Behind a reverse proxy `req.ip` is the proxy unless we say otherwise, which
   // would rate-limit every user as one. `1` trusts a single hop — deliberately
@@ -76,7 +82,9 @@ export function createApp(): Express {
   app.use('/api/', limiter);
 
   if (!env.isTest) {
-    app.use(morgan(env.isProduction ? 'combined' : 'dev'));
+    // Query strings can contain OAuth codes and state. Log paths only.
+    morgan.token('safe-path', (req) => req.url?.split('?')[0] ?? '/');
+    app.use(morgan(':method :safe-path :status :response-time ms'));
   }
 
   app.use(
@@ -88,8 +96,6 @@ export function createApp(): Express {
   );
   app.use(express.json({ limit: '100kb' }));
   app.use(express.urlencoded({ extended: true, limit: '100kb' }));
-  app.use(requestId);
-  app.use(trackMetrics);
 
   // Sessions + Passport power the developer console. The store is SQLite, so
   // logins survive a restart.
@@ -106,7 +112,7 @@ export function createApp(): Express {
     session({
       name: 'petpal.sid',
       store: new SqliteSessionStore(getDb()),
-      secret: env.sessionSecret,
+      secret: env.sessionSecrets,
       resave: false,
       saveUninitialized: false,
       // Trust `X-Forwarded-Proto`, so a `Secure` cookie is still set when TLS is
@@ -124,7 +130,9 @@ export function createApp(): Express {
   configurePassport();
   app.use(passport.initialize());
   app.use(passport.session());
+  app.use(enforceSession);
   app.use('/api/', checkOrigin);
+  app.use('/api/', csrfProtection);
 
   if (env.isProduction) {
     app.use((_req: Request, res: Response, next: NextFunction) => {
