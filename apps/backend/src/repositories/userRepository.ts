@@ -15,6 +15,7 @@ export interface User {
   role: Role;
   createdAt: string;
   lastLoginAt: string | null;
+  disabled: boolean;
 }
 
 export interface OAuthProfile {
@@ -23,6 +24,7 @@ export interface OAuthProfile {
   email?: string | null;
   name?: string | null;
   avatarUrl?: string | null;
+  emailVerified?: boolean;
 }
 
 interface UserRow {
@@ -35,6 +37,7 @@ interface UserRow {
   role: Role;
   created_at: string;
   last_login_at: string | null;
+  disabled: number;
 }
 
 function toUser(row: UserRow): User {
@@ -48,6 +51,7 @@ function toUser(row: UserRow): User {
     role: row.role,
     createdAt: row.created_at,
     lastLoginAt: row.last_login_at,
+    disabled: row.disabled === 1,
   };
 }
 
@@ -66,7 +70,7 @@ export class UserRepository {
 
   findByProvider(provider: string, providerUserId: string): User | null {
     const row = this.db
-      .prepare('SELECT * FROM users WHERE provider = ? AND provider_user_id = ?')
+      .prepare('SELECT u.* FROM users u JOIN identities i ON i.user_id = u.id WHERE i.provider = ? AND i.provider_user_id = ?')
       .get(provider, providerUserId) as UserRow | undefined;
     return row ? toUser(row) : null;
   }
@@ -74,8 +78,15 @@ export class UserRepository {
   /** Insert a user on first login, or refresh their profile on subsequent ones. */
   upsertFromOAuth(profile: OAuthProfile): User {
     const now = new Date().toISOString();
-    const email = profile.email ?? null;
-    const role: Role = email && adminEmails().includes(email.toLowerCase()) ? 'admin' : 'user';
+    const email = profile.email?.trim().toLowerCase() ?? null;
+    const role: Role = profile.provider !== 'dev' && profile.emailVerified === true && email && adminEmails().includes(email) ? 'admin' : 'user';
+    const linked = this.findByProvider(profile.provider, profile.providerUserId);
+    if (linked) {
+      this.db.prepare(`UPDATE users SET last_login_at = ?, email = COALESCE(?, email), name = COALESCE(?, name), avatar_url = COALESCE(?, avatar_url),
+        role = CASE WHEN provider = 'dev' THEN 'user' WHEN role = 'admin' THEN 'admin' ELSE ? END WHERE id = ?`)
+        .run(now, email, profile.name ?? null, profile.avatarUrl ?? null, role, linked.id);
+      return this.findById(linked.id)!;
+    }
 
     this.db
       .prepare(
@@ -88,7 +99,7 @@ export class UserRepository {
            name          = excluded.name,
            avatar_url    = excluded.avatar_url,
            last_login_at = excluded.last_login_at,
-           role          = CASE WHEN users.role = 'admin' THEN 'admin' ELSE excluded.role END`,
+           role          = CASE WHEN users.provider = 'dev' THEN 'user' WHEN users.role = 'admin' THEN 'admin' ELSE excluded.role END`,
       )
       .run({
         id: randomUUID(),
@@ -101,7 +112,36 @@ export class UserRepository {
         now,
       });
 
-    return this.findByProvider(profile.provider, profile.providerUserId)!;
+    const row = this.db.prepare('SELECT id FROM users WHERE provider = ? AND provider_user_id = ?').get(profile.provider, profile.providerUserId) as { id: string };
+    this.db.prepare('INSERT OR IGNORE INTO identities VALUES (?, ?, ?)').run(profile.provider, profile.providerUserId, row.id);
+    return this.findById(row.id)!;
+  }
+
+  identities(userId: string): { provider: string; providerUserId: string }[] {
+    return this.db.prepare('SELECT provider, provider_user_id AS providerUserId FROM identities WHERE user_id = ? ORDER BY provider').all(userId) as { provider: string; providerUserId: string }[];
+  }
+
+  link(userId: string, profile: OAuthProfile): User {
+    return this.db.transaction(() => {
+      const owner = this.findByProvider(profile.provider, profile.providerUserId);
+      if (owner && owner.id !== userId) throw new Error('Identity already belongs to another account');
+      this.db.prepare('INSERT OR IGNORE INTO identities VALUES (?, ?, ?)').run(profile.provider, profile.providerUserId, userId);
+      return this.findById(userId)!;
+    }).immediate();
+  }
+
+  unlink(userId: string, provider: string): boolean {
+    return this.db.transaction(() => {
+      const remaining = this.identities(userId).filter((identity) => identity.provider !== provider);
+      if (!remaining.length) return false;
+      const changed = this.db.prepare('DELETE FROM identities WHERE user_id = ? AND provider = ?').run(userId, provider).changes > 0;
+      if (changed && this.findById(userId)?.provider === provider) {
+        // Release the original provider tuple so an unlinked identity cannot
+        // regain the account through users' legacy uniqueness constraint.
+        this.db.prepare('UPDATE users SET provider = ?, provider_user_id = ? WHERE id = ?').run(remaining[0].provider, remaining[0].providerUserId, userId);
+      }
+      return changed;
+    }).immediate();
   }
 }
 
