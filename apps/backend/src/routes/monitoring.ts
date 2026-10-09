@@ -55,11 +55,14 @@ export const trackMetrics = (req: Request, res: Response, next: NextFunction) =>
   
   // Track request
   metrics.requests.total++;
-  const endpoint = `${req.method} ${req.route?.path || req.path}`;
-  metrics.requests.byEndpoint[endpoint] = (metrics.requests.byEndpoint[endpoint] || 0) + 1;
   
   // Track response completion
   res.on('finish', () => {
+    const route = typeof req.route?.path === 'string' ? req.route.path : 'unmatched';
+    // Mount names can contain parameters, so normalize dynamic base segments.
+    const base = req.baseUrl.replace(/[a-f0-9-]{32,}/gi, ':id');
+    const endpoint = `${req.method} ${route === 'unmatched' ? 'unmatched' : base + route}`;
+    metrics.requests.byEndpoint[endpoint] = (metrics.requests.byEndpoint[endpoint] || 0) + 1;
     const responseTime = Date.now() - startTime;
 
     // Update performance metrics
@@ -81,8 +84,9 @@ export const trackMetrics = (req: Request, res: Response, next: NextFunction) =>
     }
 
     // Calculate average response time
+    const completed = metrics.requests.successful + metrics.requests.failed;
     metrics.performance.averageResponseTime =
-      (metrics.performance.averageResponseTime * (metrics.requests.total - 1) + responseTime) / metrics.requests.total;
+      (metrics.performance.averageResponseTime * (completed - 1) + responseTime) / completed;
   });
   
   next();
@@ -104,7 +108,7 @@ router.get('/metrics', asyncHandler(async (req: Request, res: Response) => {
       formatted: formatUptime(uptimeSeconds)
     },
     timestamp: new Date().toISOString(),
-    requestId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    requestId: res.locals.requestId
   };
   
   res.json(response);
@@ -149,7 +153,7 @@ router.get('/status', asyncHandler(async (req: Request, res: Response) => {
       totalRequests: metrics.requests.total,
       totalErrors: metrics.errors.total
     },
-    requestId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    requestId: res.locals.requestId
   };
   
   res.json(status);
