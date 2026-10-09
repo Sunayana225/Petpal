@@ -18,109 +18,95 @@ export interface CacheStats {
   hits: number;
   misses: number;
   coalesced: number;
+  inflight: number;
+  evictions: number;
+  expired: number;
+  capacity: number;
+  maxInflight: number;
+  hitRatio: number;
+}
+
+export class CacheCapacityError extends Error {
+  constructor() { super('Cache has reached its concurrent factory limit.'); this.name = 'CacheCapacityError'; }
 }
 
 export class TtlCache<T = unknown> {
   private readonly store = new Map<string, CacheEntry<T>>();
   private readonly inflight = new Map<string, Promise<T>>();
-
   private hits = 0;
   private misses = 0;
   private coalesced = 0;
+  private evictions = 0;
+  private expired = 0;
 
-  /**
-   * @param maxEntries upper bound before oldest entries are evicted, so the
-   *                   cache can never grow without limit in a long-lived process.
-   */
-  constructor(private readonly maxEntries: number = 1000) {}
+  constructor(private readonly maxEntries = 1000, private readonly maxInflight = 100) {
+    if (!Number.isSafeInteger(maxEntries) || maxEntries < 1 || !Number.isSafeInteger(maxInflight) || maxInflight < 1) throw new RangeError('Cache capacities must be positive safe integers.');
+  }
+
+  peek(key: string): T | undefined {
+    const entry = this.store.get(key);
+    if (entry && Date.now() >= entry.expiresAt) { this.store.delete(key); this.expired++; return undefined; }
+    return entry?.value;
+  }
 
   get(key: string): T | undefined {
-    const entry = this.store.get(key);
-    if (!entry) {
-      this.misses++;
-      return undefined;
-    }
-    if (Date.now() >= entry.expiresAt) {
-      this.store.delete(key);
-      this.misses++;
-      return undefined;
-    }
+    const value = this.peek(key);
+    if (value === undefined) { this.misses++; return undefined; }
     this.hits++;
-    return entry.value;
+    const entry = this.store.get(key)!;
+    this.store.delete(key); this.store.set(key, entry);
+    return value;
   }
 
   set(key: string, value: T, ttlMs: number): void {
-    if (ttlMs <= 0) return;
-    if (!this.store.has(key) && this.store.size >= this.maxEntries) {
-      this.evictOldest();
+    // Explicit writes supersede pending factories and expired values.
+    this.inflight.delete(key);
+    if (!Number.isFinite(ttlMs)) throw new RangeError('Cache TTL must be finite.');
+    if (ttlMs <= 0 || value === undefined) { this.store.delete(key); return; }
+    this.prune();
+    this.store.delete(key);
+    while (this.store.size >= this.maxEntries) {
+      this.store.delete(this.store.keys().next().value!); this.evictions++;
     }
     this.store.set(key, { value, expiresAt: Date.now() + ttlMs });
   }
 
-  has(key: string): boolean {
-    return this.get(key) !== undefined;
+  has(key: string): boolean { return this.peek(key) !== undefined; }
+  delete(key: string): void { this.store.delete(key); this.inflight.delete(key); }
+  prune(): number {
+    const before = this.store.size;
+    for (const [key, entry] of this.store) if (entry.expiresAt <= Date.now()) this.store.delete(key);
+    const removed = before - this.store.size;
+    this.expired += removed;
+    return removed;
   }
-
-  delete(key: string): void {
-    this.store.delete(key);
-  }
-
   clear(): void {
-    this.store.clear();
-    this.inflight.clear();
-    this.hits = 0;
-    this.misses = 0;
-    this.coalesced = 0;
+    this.store.clear(); this.inflight.clear();
+    this.hits = 0; this.misses = 0; this.coalesced = 0; this.evictions = 0; this.expired = 0;
   }
-
   get stats(): CacheStats {
-    return { size: this.store.size, hits: this.hits, misses: this.misses, coalesced: this.coalesced };
+    this.prune();
+    return { size: this.store.size, hits: this.hits, misses: this.misses, coalesced: this.coalesced,
+      inflight: this.inflight.size, evictions: this.evictions, expired: this.expired, capacity: this.maxEntries, maxInflight: this.maxInflight,
+      hitRatio: this.hits + this.misses ? this.hits / (this.hits + this.misses) : 0 };
   }
 
-  /**
-   * Return the cached value, or run `factory` exactly once for every caller
-   * currently asking for the same key and cache the result.
-   *
-   * Failed factories are *not* cached — a transient upstream failure must not
-   * be memoised for the TTL window.
-   */
-  async getOrSet(
-    key: string,
-    ttlMs: number | ((value: T) => number),
-    factory: () => Promise<T>,
-  ): Promise<{ value: T; fromCache: boolean }> {
+  async getOrSet(key: string, ttlMs: number | ((value: T) => number), factory: () => Promise<T>): Promise<{ value: T; fromCache: boolean }> {
     const cached = this.get(key);
     if (cached !== undefined) return { value: cached, fromCache: true };
-
     const existing = this.inflight.get(key);
-    if (existing) {
-      this.coalesced++;
-      return { value: await existing, fromCache: true };
-    }
-
-    const promise = factory().finally(() => {
-      this.inflight.delete(key);
+    if (existing) { this.coalesced++; return { value: await existing, fromCache: true }; }
+    if (this.inflight.size >= this.maxInflight) throw new CacheCapacityError();
+    // Deferring the factory also captures synchronous throws and installs the owner first.
+    const promise = Promise.resolve().then(factory).then(value => {
+      if (this.inflight.get(key) === promise) this.set(key, value, typeof ttlMs === 'function' ? ttlMs(value) : ttlMs);
+      return value;
+    }).finally(() => {
+      // An invalidated old factory must never remove a newer factory for the same key.
+      if (this.inflight.get(key) === promise) this.inflight.delete(key);
     });
     this.inflight.set(key, promise);
-
-    const value = await promise;
-    // Let callers cache "definitive" answers for longer than guesses.
-    const ttl = typeof ttlMs === 'function' ? ttlMs(value) : ttlMs;
-    this.set(key, value, ttl);
-    return { value, fromCache: false };
-  }
-
-  private evictOldest(): void {
-    const now = Date.now();
-    for (const [key, entry] of this.store) {
-      if (entry.expiresAt <= now) this.store.delete(key);
-    }
-    // Map preserves insertion order, so the first key is the oldest live one.
-    while (this.store.size >= this.maxEntries) {
-      const oldest = this.store.keys().next();
-      if (oldest.done) break;
-      this.store.delete(oldest.value);
-    }
+    return { value: await promise, fromCache: false };
   }
 }
 
