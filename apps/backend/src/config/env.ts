@@ -20,8 +20,18 @@ export const DEV_ORIGINS = [
 ];
 
 function parsePositiveInt(value: string | undefined): number | null {
-  const parsed = Number.parseInt(value ?? '', 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  const parsed = Number(value);
+  return /^\d+$/.test(value ?? '') && Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function boundedInt(name: string, fallback: number, min: number, max: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw === '') return fallback;
+  const value = Number(raw);
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(value) || value < min || value > max) {
+    throw new Error(`${name} must be an integer between ${min} and ${max}`);
+  }
+  return value;
 }
 
 export const env = {
@@ -43,7 +53,7 @@ export const env = {
     return process.env.TRUST_PROXY === '1';
   },
   get port(): number {
-    return Number.parseInt(process.env.PORT || '3001', 10);
+    return boundedInt('PORT', 3001, 1, 65535);
   },
 
   // -- secrets & sessions ----------------------------------------------------
@@ -54,7 +64,10 @@ export const env = {
    */
   get sessionSecret(): string {
     const secret = process.env.SESSION_SECRET;
-    if (secret) return secret;
+    if (secret) {
+      if (this.isProduction && Buffer.byteLength(secret) < 32) throw new Error('SESSION_SECRET needs at least 32 bytes in production');
+      return secret;
+    }
     if (this.isProduction) throw new Error('SESSION_SECRET must be set in production');
     return 'petpal-dev-secret-change-me';
   },
@@ -110,10 +123,10 @@ export const env = {
     return process.env.WEB_APP_URL ?? 'http://localhost:3000';
   },
   get rateLimitWindowMs(): number {
-    return Number.parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10);
+    return boundedInt('RATE_LIMIT_WINDOW_MS', 900000, 1000, 86400000);
   },
   get rateLimitMax(): number {
-    return Number.parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10);
+    return boundedInt('RATE_LIMIT_MAX_REQUESTS', 100, 1, 1000000);
   },
   get logLevel(): string {
     return (process.env.LOG_LEVEL ?? '').toLowerCase();
@@ -138,7 +151,7 @@ export const env = {
   },
   /** Dev sign-in shortcut: allowed outside production unless disabled. */
   get devAuthEnabled(): boolean {
-    return this.nodeEnv !== 'production' || process.env.DEV_AUTH === '1';
+    return (this.isDevelopment || this.isTest) && process.env.DEV_AUTH !== '0';
   },
 
   // -- AI --------------------------------------------------------------------
@@ -151,7 +164,7 @@ export const env = {
   },
   /** How long a durable AI answer stays fresh (hours). */
   get aiAnswerTtlHours(): number {
-    return parsePositiveInt(process.env.AI_ANSWER_TTL_HOURS) ?? 168;
+    return boundedInt('AI_ANSWER_TTL_HOURS', 168, 1, 8760);
   },
   /** Whether unreviewed AI answers may be served (vs. only human-approved). */
   get serveUnreviewedAi(): boolean {
@@ -165,11 +178,46 @@ export const env = {
   },
   /** Default per-key quota; `null` means unlimited. */
   get defaultKeyQuota(): number | null {
-    const parsed = Number.parseInt(process.env.DEFAULT_KEY_QUOTA ?? '', 10);
-    return Number.isFinite(parsed) ? parsed : null;
+    return process.env.DEFAULT_KEY_QUOTA ? boundedInt('DEFAULT_KEY_QUOTA', 0, 0, 1000000000) : null;
   },
   /** Unvalidated window name — the caller narrows it to a known window. */
   get defaultKeyWindow(): string | undefined {
     return process.env.DEFAULT_KEY_WINDOW;
   },
+  get sessionSecrets(): string[] {
+    const old = (process.env.SESSION_PREVIOUS_SECRETS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+    if (this.isProduction && old.some((s) => Buffer.byteLength(s) < 32)) throw new Error('Previous session secrets need at least 32 bytes');
+    return [this.sessionSecret, ...old];
+  },
+  get sessionAbsoluteMs(): number { return boundedInt('SESSION_ABSOLUTE_MS', 86400000, 60000, 2592000000); },
+  get sessionIdleMs(): number { return boundedInt('SESSION_IDLE_MS', 1800000, 60000, 86400000); },
+  get reauthMs(): number { return boundedInt('REAUTH_MS', 600000, 60000, 3600000); },
+  get oauthTransactionMs(): number { return boundedInt('OAUTH_TRANSACTION_MS', 600000, 30000, 1800000); },
+  get maxActiveKeys(): number { return boundedInt('MAX_ACTIVE_KEYS', 20, 1, 1000); },
+  get accountDailyQuota(): number { return boundedInt('ACCOUNT_DAILY_QUOTA', 10000, 1, 1000000000); },
+  get keyBurstLimit(): number { return boundedInt('KEY_BURST_LIMIT', 60, 1, 100000); },
+  get loginLimit(): number { return boundedInt('LOGIN_LIMIT', 30, 1, 10000); },
+  get aiConcurrency(): number { return boundedInt('AI_CONCURRENCY', 4, 1, 64); },
 };
+
+export function validateEnvironment(): void {
+  void env.port; void env.sessionSecrets; void env.rateLimitWindowMs; void env.rateLimitMax;
+  void env.sessionAbsoluteMs; void env.sessionIdleMs; void env.reauthMs; void env.oauthTransactionMs;
+  void env.maxActiveKeys; void env.accountDailyQuota; void env.keyBurstLimit; void env.loginLimit; void env.aiConcurrency;
+  void env.defaultKeyQuota;
+  if (env.defaultKeyWindow && !['day', 'month', 'total'].includes(env.defaultKeyWindow)) throw new Error('Invalid DEFAULT_KEY_WINDOW');
+  if (process.env.AI_ANSWER_TTL_HOURS && !parsePositiveInt(process.env.AI_ANSWER_TTL_HOURS)) throw new Error('Invalid AI_ANSWER_TTL_HOURS');
+  if (process.env.SESSION_COOKIE_SAMESITE && !['lax', 'strict', 'none'].includes(process.env.SESSION_COOKIE_SAMESITE)) throw new Error('Invalid SESSION_COOKIE_SAMESITE');
+  if (env.isProduction) {
+    for (const [name, value] of [['WEB_APP_URL', env.webAppUrl], ['OAUTH_CALLBACK_BASE', env.oauthCallbackBase]]) {
+      const url = new URL(value);
+      if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/') {
+        throw new Error(`${name} must be an HTTPS origin`);
+      }
+    }
+    for (const origin of env.corsOrigins) {
+      if (new URL(origin).origin !== origin || !origin.startsWith('https://')) throw new Error('CORS_ORIGIN must contain HTTPS origins');
+    }
+    if (env.sessionCookieSameSite === 'none' && !env.corsOrigins.includes(new URL(env.webAppUrl).origin)) throw new Error('Cross-site cookies require WEB_APP_URL in CORS_ORIGIN');
+  }
+}
