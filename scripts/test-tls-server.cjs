@@ -1,0 +1,16 @@
+const { mkdtempSync, readFileSync, rmSync } = require('node:fs');
+const { tmpdir } = require('node:os');
+const { join } = require('node:path');
+const { execFileSync } = require('node:child_process');
+const https = require('node:https');
+const directory = mkdtempSync(join(tmpdir(), 'petpal-tls-'));
+const openssl = process.platform === 'win32' ? 'C:/Program Files/Git/usr/bin/openssl.exe' : 'openssl';
+execFileSync(openssl, ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', join(directory, 'key.pem'), '-out', join(directory, 'cert.pem'), '-days', '1', '-subj', '/CN=127.0.0.1'], { stdio: 'ignore', windowsHide: true });
+Object.assign(process.env, { NODE_ENV: 'test', DB_PATH: ':memory:', SESSION_COOKIE_SAMESITE: 'none', CORS_ORIGIN: 'http://127.0.0.1:42179', RATE_LIMIT_MAX_REQUESTS: '10000', LOGIN_LIMIT: '1000' });
+require('ts-node').register({ project: join(__dirname, '../apps/backend/tsconfig.json') });
+const { createApp } = require('../apps/backend/src/app');
+const server = https.createServer({ key: readFileSync(join(directory, 'key.pem')), cert: readFileSync(join(directory, 'cert.pem')) }, createApp());
+server.listen(42443, '0.0.0.0');
+const cleanup = () => { server.close(); rmSync(directory, { recursive: true, force: true }); };
+process.on('SIGTERM', cleanup); process.on('SIGINT', cleanup);
+process.on('exit', () => rmSync(directory, { recursive: true, force: true }));

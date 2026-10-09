@@ -10,7 +10,7 @@ export default defineConfig({
     // Dev-only proxy so the client can talk to the API without CORS games.
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: process.env.PETPAL_API_PROXY_TARGET ?? 'http://localhost:3001',
         changeOrigin: true,
       },
     },
