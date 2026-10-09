@@ -32,7 +32,7 @@ jobs:
       - run: npm run audit:release
       - run: npm audit --json > artifacts/workspace-audit.json
         continue-on-error: true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: audit-node-${{ matrix.node }}
@@ -50,7 +50,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run test:load
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: browser-traces
