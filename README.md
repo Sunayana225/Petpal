@@ -87,7 +87,7 @@ Set `SESSION_SECRET` and the client ids/secrets (see `.env.example`).
 Key generation requires a signed-in user, so until OAuth is configured use the
 dev shortcut: the web login page shows a **"Continue as dev user (local only)"**
 button in development, backed by `POST /api/auth/dev-login`. It is refused in
-production unless you deliberately set `DEV_AUTH=1`.
+production, including when `DEV_AUTH=1`. Set `DEV_AUTH=0` to disable it locally.
 
 ## Supported species
 
