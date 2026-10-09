@@ -13,6 +13,9 @@ import { createDatasetRouter } from './foodSafety/dataset';
 import { geminiRouter } from './gemini';
 import { meRouter } from './keys';
 import { monitoringRouter } from './monitoring';
+import { sessionsRouter } from './sessions';
+import { getDb } from '../db/database';
+import { openapi } from '../config/openapi';
 
 /** What the route layer needs handed to it. */
 export interface ApiDependencies {
@@ -34,12 +37,18 @@ export function createApiRouter({ foodSafety }: ApiDependencies): Router {
 
   // ---- public -----------------------------------------------------------------
   api.get('/health', healthCheck);
+  api.get('/ready', (_req, res) => {
+    try { getDb().prepare('SELECT 1').get(); res.json({ status: 'ready', requestId: res.locals.requestId }); }
+    catch { res.status(503).json({ error: 'Unavailable', message: 'Database is not ready.' }); }
+  });
   api.get('/info', infoHandler);
+  api.get('/openapi.json', (_req, res) => res.json(openapi));
 
   // ---- console & operations ---------------------------------------------------
   api.use('/auth', authRouter);
   api.use('/gemini', geminiRouter);
   api.use('/me', meRouter);
+  api.use('/sessions', sessionsRouter);
   api.use('/admin', adminRouter);
   // Metrics and process status disclose internals, so they require admin access.
   api.use('/monitoring', requireAdmin, monitoringRouter);
