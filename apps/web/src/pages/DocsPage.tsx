@@ -46,7 +46,7 @@ const DOC_GROUPS: DocGroup[] = [
         response: `{
   "status": "OK",
   "message": "PetPal API is running!",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "environment": "development",
   "uptime": 128,
   "services": { "gemini": true },
@@ -60,7 +60,7 @@ const DOC_GROUPS: DocGroup[] = [
         summary: 'Version, supported species and the endpoint index.',
         response: `{
   "name": "PetPal Food Safety API",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "supportedPets": ["dogs", "cats", "rabbits", "…"],
   "endpoints": { "check": "POST /api/food-safety/check", "…": "…" }
 }`,

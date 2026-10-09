@@ -45,7 +45,7 @@ export function createApiRouter({ foodSafety }: ApiDependencies): Router {
     try { getDb().prepare('SELECT 1').get(); res.json({ status: 'ready', requestId: res.locals.requestId }); }
     catch { res.status(503).json({ error: 'Unavailable', message: 'Database is not ready.' }); }
   });
-  api.get('/info', infoHandler);
+  api.get('/info', (req, res) => infoHandler(req, res, foodSafety));
   api.get('/openapi.json', (_req, res) => res.json(openapi));
   api.use('/recalls', createRecallRouter());
 
@@ -97,7 +97,7 @@ export function rootHandler(_req: Request, res: Response): void {
     version: API_VERSION,
     status: 'running',
     description:
-      'Instant, veterinary-sourced answers to "can my pet eat this?" across 10 species.',
+      'Source-linked pet food information with explicit uncertainty and review provenance.',
     endpoints: {
       health: '/api/health',
       info: '/api/info',
@@ -109,12 +109,13 @@ export function rootHandler(_req: Request, res: Response): void {
   });
 }
 
-function infoHandler(_req: Request, res: Response): void {
+function infoHandler(_req: Request, res: Response, foodSafety: FoodSafetyService): void {
   res.json({
     name: 'PetPal Food Safety API',
     version: API_VERSION,
     description: 'API for checking pet food safety across multiple pet types',
-    supportedPets: [...SUPPORTED_PET_KEYS],
+    supportedPets: foodSafety.getSupportedPets(),
+    acceptedPetKeys: [...SUPPORTED_PET_KEYS],
     capabilities: { datasetPagination: ['offset', 'cursor'], batchChecks: { maxItems: 20, mode: 'local', keyed: true }, comparison: { maxPets: 10, mode: 'local', keyed: true }, conditionalDatasets: true, localChecks: true },
     endpoints: {
       root: '/',

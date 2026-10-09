@@ -95,6 +95,8 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   }
   if (!user) {
     if (error) return <div role="alert" className="py-24 text-center"><p>{error}</p><button onClick={() => void refresh()}>Retry session check</button></div>;
+    // An exiting animated route can remain mounted after the login navigation.
+    if (location.pathname === '/login') return null;
     return (
       <Navigate
         to="/login"

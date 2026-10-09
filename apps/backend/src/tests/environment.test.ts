@@ -11,6 +11,7 @@ test('production requires strong secrets and HTTPS callback configuration', () =
     Object.assign(process.env, { NODE_ENV: 'production', SESSION_SECRET: 'short' });
     expect(() => validateEnvironment()).toThrow(/32/);
     process.env.SESSION_SECRET = 'x'.repeat(32);
+    process.env.DB_PATH = '/tmp/petpal-test.db';
     process.env.WEB_APP_URL = 'http://localhost:3000';
     expect(() => validateEnvironment()).toThrow(/HTTPS/);
   } finally { process.env = before; }

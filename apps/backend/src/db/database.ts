@@ -1,4 +1,6 @@
 import Database from 'better-sqlite3';
+import { mkdirSync } from 'fs';
+import { dirname } from 'path';
 
 import { env } from '../config/env';
 import { dataFilePath } from '../utils/dataFiles';
@@ -15,6 +17,7 @@ const DEFAULT_FILE = 'petpal.db';
  * database per suite with no files left behind.
  */
 export function createDatabase(path: string = env.dbPath ?? dataFilePath(DEFAULT_FILE)): Db {
+  if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
   const db = new Database(path);
 
   // WAL keeps readers from blocking the writer; meaningless for :memory:.

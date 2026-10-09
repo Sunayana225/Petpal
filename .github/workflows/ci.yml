@@ -21,13 +21,15 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
+      - run: node -e "const d=require('better-sqlite3')(':memory:'); d.close();"
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test --workspace @petpal/backend -- --runInBand
       - run: npm run test --workspace @petpal/web
       - run: npm run build
       - run: npm run audit:backend
+      - run: npm run audit:release
       - run: npm audit --json > artifacts/workspace-audit.json
         continue-on-error: true
       - uses: actions/upload-artifact@v4
@@ -43,7 +45,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
+      - run: node -e "const d=require('better-sqlite3')(':memory:'); d.close();"
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run test:load
@@ -52,3 +55,30 @@ jobs:
         with:
           name: browser-traces
           path: test-results/
+  production-container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: docker build -t petpal:ci .
+      - name: Start production container
+        run: |
+          docker run -d --name petpal-ci -p 127.0.0.1:3001:3001 --read-only --tmpfs /tmp -v petpal-ci-data:/var/lib/petpal -e SESSION_SECRET="$(openssl rand -hex 48)" -e WEB_APP_URL=https://app.petpal.example -e OAUTH_CALLBACK_BASE=https://api.petpal.example -e CORS_ORIGIN=https://app.petpal.example -e DEV_AUTH=1 petpal:ci
+      - run: node scripts/smoke-deployment.cjs http://127.0.0.1:3001
+      - name: Check volume persistence, backup and restart
+        run: |
+          docker exec -i -e CI_PERSISTENCE_TEST=1 -e CI_PERSISTENCE_SEED=1 petpal-ci node < scripts/assert-container-persistence.cjs
+          docker exec petpal-ci node scripts/backup-db.cjs /var/lib/petpal/backup.db
+          docker restart petpal-ci
+          node scripts/smoke-deployment.cjs http://127.0.0.1:3001
+          docker exec -i -e CI_PERSISTENCE_TEST=1 petpal-ci node < scripts/assert-container-persistence.cjs
+          docker exec -i -e CI_PERSISTENCE_TEST=1 -e DB_PATH=/var/lib/petpal/backup.db petpal-ci node < scripts/assert-container-persistence.cjs
+          docker exec petpal-ci node -e "const D=require('better-sqlite3'); const d=new D('/var/lib/petpal/backup.db',{readonly:true}); if(d.pragma('integrity_check',{simple:true})!=='ok')process.exit(1); d.close();"
+      - name: Container diagnostics
+        if: failure()
+        run: docker logs petpal-ci
+      - name: Stop test container
+        if: always()
+        run: docker rm -f petpal-ci || true

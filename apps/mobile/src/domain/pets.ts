@@ -20,7 +20,7 @@ export const PETS: PetMeta[] = [
 ];
 
 export const SAFETY_META: Record<SafetyLevel, { label: string; color: string; gloss: string }> = {
-  safe: { label: 'Safe', color: '#3f5a3a', gloss: 'Generally fine in normal amounts.' },
+  safe: { label: 'Listed safe', color: '#3f5a3a', gloss: 'Source-listed suitability; preparation, quantity and health matter.' },
   caution: { label: 'Caution', color: '#945c26', gloss: 'Moderation only — check with your vet.' },
   unsafe: { label: 'Unsafe', color: '#7a2e22', gloss: 'Do not feed. Contact a vet if consumed.' },
   unknown: { label: 'Unknown', color: '#8f8f84', gloss: 'No data — consult a veterinarian.' },

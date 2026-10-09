@@ -168,7 +168,7 @@ export const env = {
   },
   /** Whether unreviewed AI answers may be served (vs. only human-approved). */
   get serveUnreviewedAi(): boolean {
-    return (process.env.AI_CACHE_SERVE_UNREVIEWED ?? 'true') !== 'false';
+    return !this.isProduction && (process.env.AI_CACHE_SERVE_UNREVIEWED ?? 'true') !== 'false';
   },
 
   // -- data & keys -----------------------------------------------------------
@@ -209,6 +209,8 @@ export function validateEnvironment(): void {
   if (process.env.AI_ANSWER_TTL_HOURS && !parsePositiveInt(process.env.AI_ANSWER_TTL_HOURS)) throw new Error('Invalid AI_ANSWER_TTL_HOURS');
   if (process.env.SESSION_COOKIE_SAMESITE && !['lax', 'strict', 'none'].includes(process.env.SESSION_COOKIE_SAMESITE)) throw new Error('Invalid SESSION_COOKIE_SAMESITE');
   if (env.isProduction) {
+    if (process.env.AI_CACHE_SERVE_UNREVIEWED === 'true') throw new Error('Production cannot serve unreviewed AI answers');
+    if (!env.dbPath || env.dbPath === ':memory:') throw new Error('DB_PATH must name persistent storage in production');
     for (const [name, value] of [['WEB_APP_URL', env.webAppUrl], ['OAUTH_CALLBACK_BASE', env.oauthCallbackBase]]) {
       const url = new URL(value);
       if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/') {

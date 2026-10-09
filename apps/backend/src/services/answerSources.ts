@@ -98,6 +98,7 @@ export class AiAnswerSource implements AnswerSource {
         severity: ai.details.severity,
       },
       source: 'ai',
+      assessmentVersion: 'structured-v1',
     };
   }
 }

@@ -1,6 +1,6 @@
 # 🐾 PetPal
 
-**Instant, veterinary-sourced answers to "can my pet eat this?" — for ten species, with an AI fallback for the unusual stuff.**
+**Source-linked pet food information with explicit uncertainty and review provenance.**
 
 PetPal is an open-source pet food-safety checker. It answers with data first, states
 where every verdict came from, and prefers an honest `unknown` over a guess.
@@ -12,11 +12,10 @@ where every verdict came from, and prefers an honest `unknown` over a guess.
 Every check resolves in a fixed, cheapest-and-most-trustworthy-first order, and the
 response always labels which layer produced the answer (`source`):
 
-1. **Veterinary database** — a merged, in-memory index of curated, species-specific
-   safety records. Instant, free, and the most trustworthy answer available.
+1. **Source dataset** — production loads the pinned, licensed BioVet records with per-record receipts. Publisher review claims are disclosed, not independently certified by PetPal. Legacy/demo imports are development-only.
 2. **Open Pet Food Facts** — a free external database, used for foods we have no
-   local record for.
-3. **Gemini AI** — a last-resort, clearly-labelled analysis for everything else.
+   local record for. Catalog metadata always returns an unknown safety verdict.
+3. **Gemini AI** — optional structured assessments for a human review queue. Production withholds pending and legacy-format results, including BYOK results.
 4. **`unknown`** — when nothing can answer, PetPal says so and advises a vet.
 
 Common suffixes and spellings are normalised (`"Bell-Peppers!!"` → `"bell peppers"`,
@@ -26,8 +25,7 @@ Common suffixes and spellings are normalised (`"Bell-Peppers!!"` → `"bell pepp
 
 An AI answer is **never trusted silently**. When Gemini produces a real verdict
 for a food the database did not know, the answer is captured as a `pending`
-record in `apps/backend/data/learned.json` (operational data, git-ignored, and
-persisted across restarts).
+record in the SQLite `ai_answers` table (operational data, persisted across restarts).
 
 A human then approves or rejects it through a token-protected admin API:
 
@@ -42,8 +40,7 @@ curl -X POST http://localhost:3001/api/admin/queue/<id>/approve -H "x-admin-toke
 curl -X POST http://localhost:3001/api/admin/queue/<id>/reject -H "x-admin-token: $ADMIN_TOKEN"
 ```
 
-Approved records join the index as source `AI (approved)` and are the *least*
-authoritative layer, so the more cautious verdict still wins on any conflict.
+Approved current-schema AI records may be served through the durable answer cache. Approval is an administrative decision, not proof of veterinary qualifications; local source records take precedence.
 Set `ADMIN_TOKEN` in the environment; without it, every `/api/admin/*` request is
 refused (it fails closed).
 
@@ -93,9 +90,7 @@ production, including when `DEV_AUTH=1`. Set `DEV_AUTH=0` to disable it locally.
 
 Ten: **dogs, cats, rabbits, hamsters, birds, turtles, fish, lizards, snakes,
 chickens.** The live source of truth is `GET /api/food-safety/pets`; record counts
-come from `GET /api/food-safety/stats` (both require an API key). The shipped
-dataset is a few hundred merged records — see `/stats` rather than trusting a
-number in prose.
+come from `GET /api/food-safety/stats` (both require an API key). Production and development use different data policies. Query `/stats` for actual coverage; unsupported/missing records return unknown.
 
 ## Repository layout
 
@@ -142,7 +137,7 @@ module-level singletons.
 Install **once** at the repository root — every package is an npm workspace.
 
 ```bash
-npm install
+npm ci --ignore-scripts
 cp apps/backend/.env.example apps/backend/.env   # optional: add GEMINI_API_KEY
 ```
 
@@ -324,3 +319,9 @@ See the [200 further API improvements](docs/API-200-IMPROVEMENTS.md) and [API ex
 Food-check `details.evidence` and dataset `fields=evidence,aliases` expose BioVet source verdicts, publisher groups, retrieval dates, pinned revisions, references and CC BY 4.0 attribution. The web result card has expandable evidence receipts. Publisher review claims have not been independently verified by PetPal; local storage alone does not establish veterinary review.
 
 See [source ingestion plan](docs/SOURCE-INGESTION-PLAN.md) for source rights, implemented work and remaining features.
+
+## Production deployment
+
+Deploy the web client to Vercel and the API as a Docker service with persistent SQLite storage. Follow [the deployment guide](docs/VERCEL-DOCKER-DEPLOYMENT.md). The root Dockerfile, compose.yaml and vercel.json define the package. Vercel builds require VITE_API_URL pointing to the HTTPS API endpoint. The API requires SESSION_SECRET, DB_PATH and HTTPS origin configuration. Production rejects unreviewed AI serving and excludes legacy/demo data.
+
+Run `npm run audit:release` to check the actual API runtime and web build dependency locations. Mobile tooling is outside this web/API release and has a separate audit/device acceptance gate. See [the readiness report](docs/PRODUCTION-READINESS.md) for the original findings and remediation status.

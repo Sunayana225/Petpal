@@ -125,7 +125,8 @@ export class ExternalApiService {
       [];
 
     // Analyze ingredients for basic safety (this is a simple heuristic)
-    const safety = this.analyzePetFoodSafety(ingredients, product.categories);
+    // A commercial catalog is metadata, not reviewed species-specific evidence.
+    const safety = 'unknown' as const;
 
     return {
       food: query,
@@ -140,7 +141,7 @@ export class ExternalApiService {
         product_name: productName,
         barcode: product.code,
         image_url: product.image_front_url,
-        recommendation: 'This is commercial pet food data. Always check with your veterinarian for specific dietary advice.'
+        recommendation: 'Product information does not establish safety or suitability for your species. Check the label, current recall notices and your veterinarian.'
       }
     };
   }
@@ -171,47 +172,6 @@ export class ExternalApiService {
     }
 
     return false;
-  }
-
-  /**
-   * Basic safety analysis of pet food ingredients
-   */
-  private static analyzePetFoodSafety(ingredients: string[], categories?: string): 'safe' | 'unsafe' | 'caution' | 'unknown' {
-    if (!ingredients || ingredients.length === 0) {
-      return 'unknown';
-    }
-
-    const ingredientText = ingredients.join(' ').toLowerCase();
-    
-    // Check for known dangerous ingredients
-    const dangerousIngredients = [
-      'chocolate', 'cocoa', 'xylitol', 'onion', 'garlic', 'grape', 'raisin',
-      'avocado', 'macadamia', 'alcohol', 'caffeine'
-    ];
-
-    for (const dangerous of dangerousIngredients) {
-      if (ingredientText.includes(dangerous)) {
-        return 'unsafe';
-      }
-    }
-
-    // Check for questionable ingredients that require caution
-    const cautionIngredients = [
-      'artificial', 'preservative', 'by-product', 'meal', 'digest'
-    ];
-
-    for (const caution of cautionIngredients) {
-      if (ingredientText.includes(caution)) {
-        return 'caution';
-      }
-    }
-
-    // If it's specifically categorized as pet food, it's generally safe
-    if (categories && categories.toLowerCase().includes('pet')) {
-      return 'safe';
-    }
-
-    return 'unknown';
   }
 
   /**

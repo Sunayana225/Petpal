@@ -29,6 +29,7 @@ export interface FoodItem {
 }
 
 export interface FoodSafetyResult {
+  assessmentVersion?: 'structured-v1';
   pet: string;
   food: string;
   safety: SafetyLevel;

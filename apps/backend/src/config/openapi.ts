@@ -62,6 +62,7 @@ const datasetParameters = [
   parameter('If-None-Match', 'header'), parameter('If-Match', 'header'),
 ];
 const checkResult = { type: 'object', required: ['pet', 'food', 'safety', 'message'], properties: {
+  assessmentVersion: { enum: ['structured-v1'], description: 'Version of the validated AI assessment format; production also requires approval.' },
   pet: { type: 'string' }, food: { type: 'string' }, safety: { enum: ['safe', 'caution', 'unsafe', 'unknown'] }, message: { type: 'string' }, source: { enum: ['database', 'external', 'ai', 'none'] }, details: { type: 'object' },
 } };
 const batchInput = { type: 'object', additionalProperties: false, required: ['items'], properties: { items: { type: 'array', minItems: 1, maxItems: 20, items: { ...checkSchema, properties: { ...checkSchema.properties, mode: { const: 'local' } } } } } };

@@ -1,6 +1,7 @@
 import type { FoodItem, FoodSafetyResult, SafetyLevel } from '../domain/foodSafety';
 import { TTL, TtlCache } from '../utils/cache';
 import { logger, type Logger } from '../utils/logger';
+import { env } from '../config/env';
 import { normalizeFoodKey, normalizePetKey, normalizePetLabel } from '../utils/normalization';
 import { answerCache, type AnswerStore } from './answerCache';
 import { type AnswerSource, defaultAnswerSources } from './answerSources';
@@ -26,7 +27,7 @@ function buildMessage(
 
   switch (safety) {
     case 'safe':
-      return `✅ ${food} is SAFE for ${pet}${basis}!`;
+      return `${food} is listed as safe for ${pet}${basis}. Suitability depends on preparation, amount and your pet's health; consult your veterinarian.`;
     case 'unsafe':
       return `❌ ${food} is NOT SAFE for ${pet}${basis}!`;
     case 'caution':
@@ -224,7 +225,11 @@ export class FoodSafetyService {
             ms: Date.now() - sourceStartedAt,
           });
           this.persist(petLabel, result, apiKey, log);
-          return this.durable?.getServable(petLabel, normalizeFoodKey(food)) ?? result;
+          const reviewed = this.durable?.getServable(petLabel, normalizeFoodKey(food));
+          if (!env.serveUnreviewedAi && result.safety !== 'unknown' && !reviewed) {
+            return { pet, food, safety: 'unknown', source: 'none', message: 'This assessment requires review. Please consult your veterinarian.' };
+          }
+          return reviewed ?? result;
         }
         log.debug('remote source declined', {
           source: source.source,

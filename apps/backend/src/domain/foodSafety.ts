@@ -60,6 +60,7 @@ export interface EvidenceReceipt {
 }
 
 export interface FoodSafetyResult {
+  assessmentVersion?: 'structured-v1';
   /** Echoes back the caller's original, unmodified input. */
   pet: string;
   /** Echoes back the caller's original, unmodified input. */

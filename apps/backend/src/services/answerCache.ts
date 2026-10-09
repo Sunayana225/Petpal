@@ -39,6 +39,10 @@ function serveUnreviewed(): boolean {
   return env.serveUnreviewedAi;
 }
 
+function productionEligible(stored: StoredAnswer): boolean {
+  return !env.isProduction || stored.safety === 'unknown' || (stored.status === 'approved' && stored.source === 'ai' && stored.payload.assessmentVersion === 'structured-v1');
+}
+
 /**
  * Two-layer cache in front of the remote sources: an in-memory `TtlCache` for
  * the hot path, backed by the durable `ai_answers` table so a restart does not
@@ -69,6 +73,9 @@ export class DurableAnswerCache implements AnswerStore {
 
     const stored = this.repo.find(petKey, foodKey);
     if (!stored) return null;
+    if (!productionEligible(stored)) {
+      return { pet: petKey, food: foodKey, safety: 'unknown', source: 'none', message: 'This assessment requires validated human review. Please consult your veterinarian.' };
+    }
     if (stored.status === 'rejected') return { pet: petKey, food: foodKey, safety: 'unknown', source: 'none', message: 'This answer was rejected during review. Please consult your veterinarian.' };
 
     if (stored.status === 'pending' && !serveUnreviewed()) {
@@ -78,7 +85,7 @@ export class DurableAnswerCache implements AnswerStore {
         food: foodKey,
         safety: 'unknown',
         message:
-          'This food is awaiting veterinary review — please consult your veterinarian.',
+          'This food is awaiting human review — please consult your veterinarian.',
         source: 'none',
       };
     }
@@ -93,6 +100,7 @@ export class DurableAnswerCache implements AnswerStore {
    */
   getApproved(petKey: string, foodKey: string): FoodSafetyResult | null {
     const stored = this.repo.find(petKey, foodKey);
+    if (env.isProduction && stored && (stored.source !== 'ai' || stored.payload.assessmentVersion !== 'structured-v1')) return null;
     return stored && stored.status === 'approved' ? stored.payload : null;
   }
 
@@ -114,7 +122,7 @@ export class DurableAnswerCache implements AnswerStore {
     });
 
     this.memory.delete(`${petKey}|${food}`);
-    if (stored.status !== 'rejected' && (stored.status !== 'pending' || serveUnreviewed())) this.memory.set(`${petKey}|${food}`, stored.payload, stored.expiresAt === null ? TTL.ai : Math.max(0, Math.min(ttlMs, stored.expiresAt - Date.now())));
+    if (productionEligible(stored) && stored.status !== 'rejected' && (stored.status !== 'pending' || serveUnreviewed())) this.memory.set(`${petKey}|${food}`, stored.payload, stored.expiresAt === null ? TTL.ai : Math.max(0, Math.min(ttlMs, stored.expiresAt - Date.now())));
   }
 
   list(status?: AnswerStatus, limit = 100, offset = 0): StoredAnswer[] {

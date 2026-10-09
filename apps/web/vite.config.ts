@@ -2,8 +2,16 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-export default defineConfig({
+export default defineConfig(({ command }) => {
+  if (command === 'build' && process.env.VERCEL) {
+    let apiUrl: URL;
+    try { apiUrl = new URL(process.env.VITE_API_URL ?? ''); }
+    catch { throw new Error('Vercel requires VITE_API_URL=https://your-api-domain/api before building.'); }
+    if (apiUrl.protocol !== 'https:' || !['/api', '/api/'].includes(apiUrl.pathname) || apiUrl.username || apiUrl.password || apiUrl.search || apiUrl.hash) throw new Error('VITE_API_URL must be an HTTPS API endpoint without credentials, query or fragment.');
+  }
+  return {
   plugins: [react(), tailwindcss()],
+  resolve: { dedupe: ['react', 'react-dom'] },
 
   server: {
     port: 3000,
@@ -34,4 +42,5 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
     },
   },
+  };
 });

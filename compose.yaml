@@ -1,0 +1,22 @@
+services:
+  api:
+    build: .
+    init: true
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      NODE_ENV: production
+      DB_PATH: /var/lib/petpal/petpal.db
+      AI_CACHE_SERVE_UNREVIEWED: 'false'
+    ports:
+      - '127.0.0.1:3001:3001'
+    volumes:
+      - petpal-data:/var/lib/petpal
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 15s
+volumes:
+  petpal-data:

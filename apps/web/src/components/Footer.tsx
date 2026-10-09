@@ -48,11 +48,11 @@ export default function Footer() {
         </div>
 
         <div className="mt-16 flex flex-col justify-between gap-2 border-t border-slate pt-6 text-[11px] uppercase tracking-wide-cap text-mist sm:flex-row">
-          <span>Veterinary-sourced · AI-assisted</span>
+          <span>Source-linked · Review provenance disclosed</span>
           <span>Not a substitute for professional veterinary care</span>
         </div>
         <p className="mt-4 text-[10px] text-mist">
-          Data: BioVet veterinary clinic network (bio.vet) and Growli/ASPCA plant table, CC BY 4.0.
+          Data: BioVet veterinary clinic network, bio.vet · CC BY 4.0. Publisher review claims are not independently verified by PetPal.
         </p>
       </div>
     </footer>

@@ -8,9 +8,10 @@ import { getGeminiKeySync } from '../lib/geminiKey';
  * hardware. The simulator/web fall back to the local dev server.
  */
 const RAW_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+if (!__DEV__ && !/^https:\/\//.test(RAW_BASE)) throw new Error('A production HTTPS EXPO_PUBLIC_API_URL is required');
 export const API_BASE_URL = RAW_BASE.replace(/\/+$/, '');
 
-const DEFAULT_TIMEOUT_MS = 8000;
+const DEFAULT_TIMEOUT_MS = 40000;
 
 export class ApiError extends Error {
   readonly status: number;
@@ -29,6 +30,8 @@ export class ApiError extends Error {
  */
 export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
+  const cancel = () => controller.abort();
+  if (init.signal?.aborted) cancel(); else init.signal?.addEventListener('abort', cancel, { once: true });
   const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
   try {
@@ -65,5 +68,6 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     throw new ApiError('Could not reach PetPal. Check your connection.', 0);
   } finally {
     clearTimeout(timer);
+    init.signal?.removeEventListener('abort', cancel);
   }
 }

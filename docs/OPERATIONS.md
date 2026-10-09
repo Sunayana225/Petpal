@@ -6,7 +6,7 @@ The original GitHub history is retained. `petpal-backend` is a compatibility dir
 
 ## Install, verify, and launch
 
-Use Node 22 or 24 and run `npm ci` from the repository root. Copy `apps/backend/.env.example` to the backend's local `.env` and configure it there; do not commit secrets. Run `npm run verify`, `npm run test:e2e`, and `npm run test:load`. Chromium must first be installed with `npx playwright install chromium`; browser cookie tests also require OpenSSL (Git for Windows includes it).
+Use Node 22 or 24 and run `npm ci --ignore-scripts` from the repository root. Copy `apps/backend/.env.example` to the backend's local `.env` and configure it there; do not commit secrets. Run `npm run verify`, `npm run test:e2e`, and `npm run test:load`. Chromium must first be installed with `npx playwright install chromium`; browser cookie tests also require OpenSSL (Git for Windows includes it).
 
 Build from the root with `npm run build`. Launch the API from `apps/backend` using `npm run start:prod`. Set production environment values through the hosting service. Serve `apps/web/dist` with an SPA fallback and either proxy `/api` to the API or configure `VITE_API_URL` before building the web app. The development proxy can be overridden using `PETPAL_API_PROXY_TARGET` for isolated browser tests.
 

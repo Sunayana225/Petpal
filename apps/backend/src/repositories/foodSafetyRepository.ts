@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import type { FoodItem, SafetyCategory } from '../domain/foodSafety';
 import { findDataFile, readJsonFile } from '../utils/dataFiles';
 import { logger } from '../utils/logger';
+import { env } from '../config/env';
 import {
   SAFETY_RANK,
   foodVariants,
@@ -47,6 +48,8 @@ function loadLegacyDatabase(): LegacyDatabase {
   const merged: LegacyDatabase = {};
 
   for (const fileName of DATA_FILES) {
+    // Legacy/demo imports lack auditable per-record review provenance.
+    if (env.isProduction && fileName !== 'foodSafety.biovet.json') continue;
     const filePath = findDataFile(fileName);
     if (!filePath) {
       if (fileName === 'foodSafety.json') {
@@ -115,7 +118,7 @@ export class FoodSafetyRepository {
     // 2. ManyPets — the authoritative safety labels for dogs and cats. Its
     //    generated object also carries a `metadata` key, which the `'safe' in`
     //    guard below skips.
-    const manyPets = manyPetsFoodSafetyData as unknown as Record<string, ManyPetsCategoryMap>;
+    const manyPets = (env.isProduction ? {} : manyPetsFoodSafetyData) as unknown as Record<string, ManyPetsCategoryMap>;
     for (const [pet, categories] of Object.entries(manyPets)) {
       if (!categories || typeof categories !== 'object') continue;
       if (!('safe' in categories)) continue;
@@ -127,6 +130,7 @@ export class FoodSafetyRepository {
     this.rebuildLookup();
     const records = [...this.index.values()].flatMap(bucket => [...bucket.values()])
       .sort((a, b) => `${a.pet}:${a.food}`.localeCompare(`${b.pet}:${b.food}`, 'en'));
+    if (env.isProduction && records.length === 0) throw new Error('Production source dataset is missing or invalid');
     this.revision = createHash('sha256').update(JSON.stringify(records)).digest('hex').slice(0, 24);
   }
 
@@ -237,6 +241,7 @@ export class FoodSafetyRepository {
     const bucket = this.index.get(pet);
     if (!bucket) return;
     if (!item || typeof item.food !== 'string') return;
+    if (env.isProduction && !item.evidence?.some(receipt => receipt.publisher === 'BioVet' && receipt.reviewStatus === 'publisher-reported' && receipt.sourceVerdict === safety && receipt.upstreamRevision === '5cee4b35844d253d53b58683d10648e90833cee8' && /^https:\/\//.test(receipt.license) && receipt.attribution.includes('bio.vet'))) return;
 
     const foodKey = normalizeFoodKey(item.food);
     if (!foodKey) return;

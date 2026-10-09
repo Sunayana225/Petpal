@@ -36,8 +36,8 @@ export const SAFETY_META: Record<
   { label: string; gloss: string; text: string; border: string; rule: string }
 > = {
   safe: {
-    label: 'Safe',
-    gloss: 'Generally fine in normal amounts.',
+    label: 'Listed safe',
+    gloss: 'Source-listed suitability; preparation, quantity and health matter.',
     text: 'text-safe',
     border: 'border-safe',
     rule: 'bg-safe',
