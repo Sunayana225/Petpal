@@ -89,9 +89,10 @@ export function useAuth(): AuthState {
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading, error, refresh } = useAuth();
   const location = useLocation();
+  const redirectState = useMemo(() => ({ from: `${location.pathname}${location.search}` }), [location.pathname, location.search]);
 
   if (loading) {
-    return <p className="py-24 text-center text-sm italic text-mist">Checking your session…</p>;
+    return <p className="py-24 text-center text-sm italic text-mist">Checking your sessionâ€¦</p>;
   }
   if (!user) {
     if (error) return <div role="alert" className="py-24 text-center"><p>{error}</p><button onClick={() => void refresh()}>Retry session check</button></div>;
@@ -100,7 +101,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     return (
       <Navigate
         to="/login"
-        state={{ from: `${location.pathname}${location.search}` }}
+        state={redirectState}
         replace
       />
     );

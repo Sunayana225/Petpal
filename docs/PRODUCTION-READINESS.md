@@ -23,7 +23,7 @@ The local production smoke used HTTP loopback to inspect the production middlewa
 
 ## Launch blockers and required fixes
 
-### P0 — Commercial catalog metadata becomes a species-independent safety verdict
+### P0 â€” Commercial catalog metadata becomes a species-independent safety verdict
 
 `apps/backend/src/services/externalApiService.ts:179` analyzes ingredients without species-specific evidence. At line 210, a category containing "pet" becomes `safe`. `searchAllSources` at line 220 ignores `_pet`; the answer adapter then labels the result with the requested species.
 
@@ -41,7 +41,7 @@ Returned: pet=rabbits, safety=safe, source=external
 - [ ] Require reviewed evidence for the requested species before returning a definitive verdict; otherwise return unknown or defer to a reviewed source.
 - [ ] Add wrong-species, missing ingredients, ambiguous ingredients and product-category regression tests.
 
-### P0 — AI text parsing can reverse a danger warning into safe
+### P0 â€” AI text parsing can reverse a danger warning into safe
 
 `apps/backend/src/services/aiService.ts:221` derives verdicts from substring matches. The broad safe branch at line 238 runs before toxic/dangerous checks. It excludes only specific negation strings.
 
@@ -56,7 +56,7 @@ Returned safety: safe
 - [ ] Fail closed to unknown for missing, malformed or contradictory assessments.
 - [ ] Test negations, mixed/contradictory declarations and hazard warnings before enabling live AI results publicly.
 
-### P1 — Demo data and pending answers enter the public decision path
+### P1 â€” Demo data and pending answers enter the public decision path
 
 The production repository unconditionally imports `foodSafety.generated.json` (`foodSafetyRepository.ts:43`). The generator explicitly describes those records as heuristic demo data, not veterinary-verified. `checkLocal()` returns local records directly, so disabling pending AI caching does not remove synthetic records from the public checker.
 
@@ -69,7 +69,7 @@ Observed merged dataset: 30,437 records. Winning source labels: 8,072 `AI (gener
 - [ ] Verify clinical review and source rights for each legacy import; preserve per-record provenance and avoid blanket "veterinary" claims.
 - [ ] Obtain independent veterinary validation for the supported species and supported use cases before public safety claims.
 
-### P1 — Production template and deployment acceptance are incomplete
+### P1 â€” Production template and deployment acceptance are incomplete
 
 `apps/backend/.env.production.example` omits `SESSION_SECRET`, `WEB_APP_URL`, `OAUTH_CALLBACK_BASE`, OAuth credentials and `DB_PATH`, while advertising unused JWT/database/Redis/Sentry settings. The entry point uses `dotenv.config()`; copying to `.env.production` alone does not make it load that file. With no production session secret, validation fails with `SESSION_SECRET must be set in production`; with a secret but default URLs, HTTPS validation fails.
 
@@ -81,7 +81,7 @@ No actual deployment URL or host configuration was supplied. The local checkout 
 - [ ] Exercise paid AI integration and failure/rate-limit behavior if AI is included in launch scope.
 - [ ] Verify web deep-link/SPA fallback and the built client's production API base URL.
 
-### P1 — Dependency and operational launch gates remain open
+### P1 â€” Dependency and operational launch gates remain open
 
 Full workspace audit on this review reports 53 findings, including critical Vitest/tinypool and high Vite/Expo/React Native/development-tool paths. These are not reported as API runtime vulnerabilities: the separately scoped backend runtime audit is clean. Determine which vulnerable tooling ships or executes in the release pipeline and remediate it with compatibility tests; do not apply blind forced npm downgrades.
 
@@ -138,3 +138,5 @@ The package targets Vercel web + Docker API. It is not an all-Vercel SQLite depl
 Local remediation verification: full backend suite passed 341 tests in 75 suites; after the clean install and cache/source hardening, 61 focused tests passed. Workspace lint/types and both builds passed; web tests passed 13/13. Production smoke now loads only 583 BioVet records with receipts, defaults to withholding unreviewed AI, and returns unknown for the wrong-species catalog fixture. Final browser and container checks are recorded below when complete.
 
 Additional remediation checks: release-scoped API runtime and web build audits both report zero advisories. React Router upgraded to 7.18.4; React runtimes are deduplicated and exiting animated auth guards stop repeat redirects. All five browser checks passed before the redirect refinement; the final browser pass is pending. The standalone online backup restored representative account, key, session and review fixtures with integrity intact. Full workspace/mobile advisories remain tracked outside this web/API release.
+
+Final local browser run: 5/5 passed without repeated redirect warnings. Vercel builds reject a missing API URL and accept the HTTPS endpoint fixture. Initial container CI caught an omitted build cleanup helper; the Docker build stage now includes it, and container verification is being repeated.

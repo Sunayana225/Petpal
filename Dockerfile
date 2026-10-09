@@ -5,6 +5,7 @@ COPY apps/backend/package.json apps/backend/package.json
 RUN npm ci --workspace @petpal/backend --include=dev --ignore-scripts && node -e "const d=require('better-sqlite3')(':memory:'); d.close();"
 COPY apps/backend/tsconfig.json apps/backend/tsconfig.json
 COPY apps/backend/src apps/backend/src
+COPY scripts/clean-backend.cjs scripts/clean-backend.cjs
 RUN npm run build --workspace @petpal/backend
 
 FROM node:22-bookworm-slim AS runtime-deps

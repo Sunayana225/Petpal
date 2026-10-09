@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('route guard, local login, return destination, and logout', async ({ page }) => {
+  const renderErrors: string[] = [];
+  page.on('console', message => { if (/Maximum update depth|Invalid hook call/.test(message.text())) renderErrors.push(message.text()); });
   await page.goto('/tokens');
   await expect(page).toHaveURL(/\/login$/);
   await page.getByRole('button', { name: /Continue as dev user/ }).click();
@@ -8,6 +10,7 @@ test('route guard, local login, return destination, and logout', async ({ page }
   await expect(page.getByRole('heading', { name: 'Your keys.' })).toBeVisible();
   await page.getByRole('button', { name: 'Sign out', exact: true }).first().click();
   await expect(page).toHaveURL(/\/login$/);
+  expect(renderErrors).toEqual([]);
 });
 
 test('provider outage offers retry and auth hydration errors stay distinguishable', async ({ page }) => {
