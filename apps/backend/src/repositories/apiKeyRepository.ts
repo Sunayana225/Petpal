@@ -20,6 +20,7 @@ export interface ApiKey {
   createdAt: string;
   lastUsedAt: string | null;
   revokedAt: string | null;
+  expiresAt: string | null;
 }
 
 export interface ApiKeyWithHash extends ApiKey {
@@ -27,6 +28,7 @@ export interface ApiKeyWithHash extends ApiKey {
 }
 
 export interface CreateKeyInput {
+  expiresAt?: string | null;
   userId: string;
   name: string;
   keyHash: string;
@@ -39,6 +41,8 @@ export interface CreateKeyInput {
 }
 
 export interface UpdateKeyInput {
+  expiresAt?: string | null;
+  scope?: string;
   name?: string;
   enabled?: boolean;
   quotaLimit?: number | null;
@@ -61,6 +65,7 @@ interface KeyRow {
   created_at: string;
   last_used_at: string | null;
   revoked_at: string | null;
+  expires_at: string | null;
 }
 
 function parseAllowlist(value: string | null): string[] {
@@ -88,6 +93,7 @@ function toKey(row: KeyRow): ApiKey {
     createdAt: row.created_at,
     lastUsedAt: row.last_used_at,
     revokedAt: row.revoked_at,
+    expiresAt: row.expires_at,
   };
 }
 
@@ -100,9 +106,9 @@ export class ApiKeyRepository {
     this.db
       .prepare(
         `INSERT INTO api_keys
-           (id, user_id, name, prefix, key_hash, last4, enabled, scope, quota_limit, quota_window, ip_allowlist, created_at)
+           (id, user_id, name, prefix, key_hash, last4, enabled, scope, quota_limit, quota_window, ip_allowlist, created_at, expires_at)
          VALUES
-           (@id, @userId, @name, @prefix, @keyHash, @last4, 1, @scope, @quotaLimit, @quotaWindow, @ipAllowlist, @createdAt)`,
+           (@id, @userId, @name, @prefix, @keyHash, @last4, 1, @scope, @quotaLimit, @quotaWindow, @ipAllowlist, @createdAt, @expiresAt)`,
       )
       .run({
         id,
@@ -116,6 +122,7 @@ export class ApiKeyRepository {
         quotaWindow: input.quotaWindow,
         ipAllowlist: input.ipAllowlist.length ? JSON.stringify(input.ipAllowlist) : null,
         createdAt: new Date().toISOString(),
+        expiresAt: input.expiresAt ?? null,
       });
 
     return this.findById(input.userId, id)!;
@@ -124,7 +131,7 @@ export class ApiKeyRepository {
   /** Active (non-revoked) keys belonging to a user, newest first. */
   listByUser(userId: string): ApiKey[] {
     const rows = this.db
-      .prepare('SELECT * FROM api_keys WHERE user_id = ? AND revoked_at IS NULL ORDER BY created_at DESC')
+      .prepare('SELECT * FROM api_keys WHERE user_id = ? AND revoked_at IS NULL ORDER BY created_at DESC, rowid DESC')
       .all(userId) as KeyRow[];
     return rows.map(toKey);
   }
@@ -146,7 +153,7 @@ export class ApiKeyRepository {
 
   update(userId: string, id: string, patch: UpdateKeyInput): ApiKey | null {
     const existing = this.findById(userId, id);
-    if (!existing) return null;
+    if (!existing || existing.revokedAt) return null;
 
     const next = {
       name: patch.name ?? existing.name,
@@ -154,6 +161,8 @@ export class ApiKeyRepository {
       quotaLimit: patch.quotaLimit === undefined ? existing.quotaLimit : patch.quotaLimit,
       quotaWindow: patch.quotaWindow ?? existing.quotaWindow,
       ipAllowlist: patch.ipAllowlist ?? existing.ipAllowlist,
+      expiresAt: patch.expiresAt === undefined ? existing.expiresAt : patch.expiresAt,
+      scope: patch.scope ?? existing.scope,
     };
 
     this.db
@@ -163,7 +172,9 @@ export class ApiKeyRepository {
                 enabled = @enabled,
                 quota_limit = @quotaLimit,
                 quota_window = @quotaWindow,
-                ip_allowlist = @ipAllowlist
+                ip_allowlist = @ipAllowlist,
+                expires_at = @expiresAt,
+                scope = @scope
           WHERE id = @id AND user_id = @userId`,
       )
       .run({
@@ -174,6 +185,8 @@ export class ApiKeyRepository {
         quotaLimit: next.quotaLimit,
         quotaWindow: next.quotaWindow,
         ipAllowlist: next.ipAllowlist.length ? JSON.stringify(next.ipAllowlist) : null,
+        expiresAt: next.expiresAt,
+        scope: next.scope,
       });
 
     return this.findById(userId, id);
@@ -193,6 +206,15 @@ export class ApiKeyRepository {
 
   touchLastUsed(id: string): void {
     this.db.prepare('UPDATE api_keys SET last_used_at = ? WHERE id = ?').run(new Date().toISOString(), id);
+  }
+
+  transaction<T>(work: () => T): T { return this.db.transaction(work).immediate(); }
+  audit(userId: string, action: string, resourceId: string): void {
+    this.db.prepare('INSERT INTO audit_events VALUES (?, ?, ?, ?, ?)').run(randomUUID(), userId, action, resourceId, new Date().toISOString());
+  }
+  page(userId: string, limit: number, offset: number): ApiKey[] {
+    return (this.db.prepare('SELECT * FROM api_keys WHERE user_id = ? AND revoked_at IS NULL ORDER BY created_at DESC, rowid DESC LIMIT ? OFFSET ?')
+      .all(userId, limit, offset) as KeyRow[]).map(toKey);
   }
 }
 
