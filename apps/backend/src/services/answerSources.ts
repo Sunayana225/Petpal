@@ -1,6 +1,9 @@
 import type { FoodSafetyResult } from '../domain/foodSafety';
 import { AIService } from './aiService';
 import { ExternalApiService } from './externalApiService';
+import { ConcurrencyGate } from '../utils/concurrency';
+import { env } from '../config/env';
+const aiGate = new ConcurrencyGate(env.aiConcurrency);
 
 /**
  * A single place a verdict can come from when the local database has no answer.
@@ -24,6 +27,7 @@ export interface AnswerSource {
     pet: string,
     food: string,
     apiKey?: string,
+    signal?: AbortSignal,
   ): Promise<FoodSafetyResult | null>;
 }
 
@@ -35,8 +39,8 @@ export interface AnswerSource {
 export class OpenPetFoodFactsSource implements AnswerSource {
   readonly source = 'external' as const;
 
-  async resolve(petLabel: string, pet: string, food: string): Promise<FoodSafetyResult | null> {
-    const external = await ExternalApiService.searchAllSources(food, petLabel);
+  async resolve(petLabel: string, pet: string, food: string, _apiKey?: string, signal?: AbortSignal): Promise<FoodSafetyResult | null> {
+    const external = await ExternalApiService.searchAllSources(food, petLabel, signal);
     if (!external) return null;
 
     return {
@@ -73,8 +77,9 @@ export class AiAnswerSource implements AnswerSource {
     pet: string,
     food: string,
     apiKey?: string,
+    signal?: AbortSignal,
   ): Promise<FoodSafetyResult | null> {
-    const ai = await AIService.getFoodSafetyAdvice(food, petLabel, apiKey);
+    const ai = await aiGate.run(() => AIService.getFoodSafetyAdvice(food, petLabel, apiKey, signal), signal);
 
     return {
       pet,

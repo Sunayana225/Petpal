@@ -48,12 +48,12 @@ export class ExternalApiService {
   /**
    * Search for commercial pet food products by name or barcode
    */
-  static async searchPetFood(query: string): Promise<ExternalFoodSafetyResponse | null> {
+  static async searchPetFood(query: string, signal?: AbortSignal): Promise<ExternalFoodSafetyResponse | null> {
     try {
       // First try to search by product name
       const searchResponse = await fetchWithTimeout(
         `${this.OPEN_PET_FOOD_FACTS_BASE_URL}/search?search_terms=${encodeURIComponent(query)}&page_size=5&fields=code,product_name,brands,ingredients_text,image_front_url,categories`,
-        {},
+        { signal },
         EXTERNAL_API_TIMEOUT_MS,
       );
 
@@ -88,11 +88,11 @@ export class ExternalApiService {
   /**
    * Get pet food product by barcode
    */
-  static async getPetFoodByBarcode(barcode: string): Promise<ExternalFoodSafetyResponse | null> {
+  static async getPetFoodByBarcode(barcode: string, signal?: AbortSignal): Promise<ExternalFoodSafetyResponse | null> {
     try {
       const response = await fetchWithTimeout(
         `${this.OPEN_PET_FOOD_FACTS_BASE_URL}/product/${barcode}.json`,
-        {},
+        { signal },
         EXTERNAL_API_TIMEOUT_MS,
       );
 
@@ -217,9 +217,9 @@ export class ExternalApiService {
   /**
    * Search multiple external sources for food safety information
    */
-  static async searchAllSources(food: string, _pet: string): Promise<ExternalFoodSafetyResponse | null> {
+  static async searchAllSources(food: string, _pet: string, signal?: AbortSignal): Promise<ExternalFoodSafetyResponse | null> {
     // Try Open Pet Food Facts first
-    const petFoodResult = await this.searchPetFood(food);
+    const petFoodResult = await this.searchPetFood(food, signal);
     if (petFoodResult) {
       return petFoodResult;
     }

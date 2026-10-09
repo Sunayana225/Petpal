@@ -98,7 +98,9 @@ export class AIService {
     food: string,
     pet: string,
     apiKeyOverride?: string,
+    signal?: AbortSignal,
   ): Promise<AIFoodSafetyResponse> {
+    const budget = AbortSignal.any([AbortSignal.timeout(GEMINI_TIMEOUT_MS), ...(signal ? [signal] : [])]);
     const apiKey = this.resolveKey(apiKeyOverride);
 
     // Nothing to call with — return helpful guidance instead of erroring.
@@ -132,6 +134,7 @@ export class AIService {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-goog-api-key': apiKey },
             body,
+            signal: budget,
           },
           GEMINI_TIMEOUT_MS,
         );

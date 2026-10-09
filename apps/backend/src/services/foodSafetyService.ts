@@ -92,7 +92,7 @@ export class FoodSafetyService {
   async checkFoodSafety(
     pet: string,
     food: string,
-    options: { apiKey?: string; requestId?: string } = {},
+    options: { apiKey?: string; requestId?: string; signal?: AbortSignal } = {},
   ): Promise<FoodSafetyResult> {
     const startedAt = Date.now();
     const log = logger.child({ requestId: options.requestId ?? null, pet, food });
@@ -143,7 +143,7 @@ export class FoodSafetyService {
         log.debug('serving approved answer (bypassing live call)');
         return { ...approved, pet, food };
       }
-      const fresh = await this.resolveRemotely(petLabel, pet, food, options.apiKey, log);
+      const fresh = await this.resolveRemotely(petLabel, pet, food, options.apiKey, log, options.signal);
       return { ...fresh, pet, food };
     }
 
@@ -184,11 +184,14 @@ export class FoodSafetyService {
     food: string,
     apiKey: string | undefined,
     log: Logger,
+    signal?: AbortSignal,
   ): Promise<FoodSafetyResult> {
+    const budget = AbortSignal.any([AbortSignal.timeout(35000), ...(signal ? [signal] : [])]);
     for (const source of this.sources) {
+      if (budget.aborted) break;
       const sourceStartedAt = Date.now();
       try {
-        const result = await source.resolve(petLabel, pet, food, apiKey);
+        const result = await source.resolve(petLabel, pet, food, apiKey, budget);
         if (result) {
           log.info('remote source answered', {
             source: source.source,

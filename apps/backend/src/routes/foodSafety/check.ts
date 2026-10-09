@@ -67,7 +67,13 @@ export function createCheckHandler(service: FoodSafetyService) {
 
     log.debug('check requested', { pet, food, ip: req.ip, byok: Boolean(apiKey) });
 
-    const result = await service.checkFoodSafety(pet, food, { apiKey, requestId });
+    const controller = new AbortController();
+    const disconnect = () => { if (!res.writableFinished) controller.abort(); };
+    res.once('close', disconnect);
+    let result;
+    try { result = await service.checkFoodSafety(pet, food, { apiKey, requestId, signal: controller.signal }); }
+    finally { res.removeListener('close', disconnect); }
+    if (controller.signal.aborted) return;
     const duration = Date.now() - startTime;
 
     log.info('check completed', {
