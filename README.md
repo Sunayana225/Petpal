@@ -312,3 +312,7 @@ MIT — see [LICENSE](./LICENSE).
 PetPal provides general information only and is **not** a substitute for
 professional veterinary care. If you suspect poisoning, contact your veterinarian or
 the **Pet Poison Helpline (855) 764-7661** / **ASPCA Poison Control (888) 426-4435**.
+
+## API expansion
+
+See the [200 further API improvements](docs/API-200-IMPROVEMENTS.md) and [API expansion guide](docs/API-200-GUIDE.md) for bounded datasets, cursors, bulk curated checks, comparison, conditional responses, and cache/moderation operations. Dataset clients should read the pagination and search compatibility notes before updating.
