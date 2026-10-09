@@ -74,3 +74,5 @@ npm run test:load
 CI also builds the production Docker image, checks health and public data policy, tests backup integrity and repeats smoke checks after restart. Local Windows checks cannot build Docker unless Docker Engine is installed; CI container results must pass before declaring the container verified.
 
 Installation uses `--ignore-scripts` because better-sqlite3 13 packages N-API prebuilt binaries but npm otherwise attempts a native source rebuild when it sees binding.gyp. CI and Docker explicitly probe SQLite after installation, and the web build verifies its native build tooling. Do not assume an ignored install hook means a native dependency works: use the provided verification commands.
+
+Release package verified at `ca244e8` by [CI run 37966484184](https://github.com/Sunayana225/Petpal/actions/runs/37966484184): Node 22/24 checks, browser/load tests, Docker build, restart persistence and representative online backup integrity all passed. Complete the live-origin acceptance checklist before public launch.

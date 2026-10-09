@@ -130,7 +130,7 @@ The findings above describe the reviewed baseline. The following changes are now
 - [x] Docker package includes a non-root runtime, persistent volume, health checks, restart configuration and an online backup command.
 - [x] Vercel frontend configuration includes SPA routing, security headers and an explicit HTTPS API URL build gate.
 - [x] Mobile production URL enforcement, timeout and cancellation aligned; mobile distribution remains a separate acceptance gate.
-- [ ] Verify final Docker build/restart/representative backup in GitHub CI (Docker is not installed on this Windows host).
+- [x] Verify final Docker build/restart/representative backup in GitHub CI (Docker is not installed on this Windows host).
 - [ ] Configure real hosting, domains and OAuth credentials and complete the deployment checklist.
 
 The package targets Vercel web + Docker API. It is not an all-Vercel SQLite deployment. See [deployment instructions](VERCEL-DOCKER-DEPLOYMENT.md). Source publisher claims remain explicitly disclosed; these software changes do not certify clinical accuracy or independently establish reviewer credentials.
@@ -140,3 +140,5 @@ Local remediation verification: full backend suite passed 341 tests in 75 suites
 Additional remediation checks: release-scoped API runtime and web build audits both report zero advisories. React Router upgraded to 7.18.4; React runtimes are deduplicated and exiting animated auth guards stop repeat redirects. All five browser checks passed before the redirect refinement; the final browser pass is pending. The standalone online backup restored representative account, key, session and review fixtures with integrity intact. Full workspace/mobile advisories remain tracked outside this web/API release.
 
 Final local browser run: 5/5 passed without repeated redirect warnings. Vercel builds reject a missing API URL and accept the HTTPS endpoint fixture. Initial container CI caught an omitted build cleanup helper; the Docker build stage now includes it, and container verification is being repeated.
+
+Verified release code: `ca244e8f109e7ce28e22fb6fec19d587b226e658`, [successful GitHub CI run](https://github.com/Sunayana225/Petpal/actions/runs/37966484184). All four jobs passed: Node 22 and 24 verification, browser/load and production container. Container account/key/session/review persistence, restart smoke and backup integrity all passed. Local web tests 13/13, browser tests 5/5, focused auth redirect regression 1/1, and both Vercel URL build gates passed. Release-scoped audits report zero advisories; full workspace/mobile advisories remain outside this release scope. Real deployment acceptance and clinical/source suitability still require the checklist above.
