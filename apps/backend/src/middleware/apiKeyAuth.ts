@@ -50,7 +50,7 @@ export function requireApiKey(req: Request, res: Response, next: NextFunction): 
     res.status(401).json({ error: 'Unauthorized', message: 'Account unavailable.' });
     return;
   }
-  const neededScope = req.path === '/check' ? 'check' : 'dataset';
+  const neededScope = req.path.toLowerCase().replace(/\/+$/, '') === '/check' ? 'check' : 'dataset';
   if (key.scope !== 'food-safety' && key.scope !== neededScope) {
     res.status(403).json({ error: 'Forbidden', message: 'API key scope does not permit this endpoint.' });
     return;

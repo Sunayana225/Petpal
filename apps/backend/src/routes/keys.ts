@@ -53,7 +53,7 @@ router.get('/keys/:id/usage', usageRange(), paging(), handleValidation, (req: Re
     return;
   }
 
-  const since = typeof req.query.since === 'string' ? req.query.since : windowStartIso('month');
+  const since = typeof req.query.since === 'string' ? new Date(req.query.since).toISOString() : windowStartIso('month');
   const usage = usageRepository();
 
   res.json({
@@ -135,7 +135,7 @@ router.delete('/keys/:id', requireRecentAuth, (req: Request, res: Response) => {
 /** GET /api/me/usage — totals, per-day counts and recent calls across keys. */
 router.get('/usage', usageRange(), paging(), handleValidation, (req: Request, res: Response) => {
   const user = currentUser(req)!;
-  const since = typeof req.query.since === 'string' ? req.query.since : windowStartIso('month');
+  const since = typeof req.query.since === 'string' ? new Date(req.query.since).toISOString() : windowStartIso('month');
   const usage = usageRepository();
 
   res.json({

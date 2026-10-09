@@ -2,6 +2,8 @@
 
 This checkout uses the npm workspace layout: `apps/backend`, `apps/web`, and `apps/mobile`. The API and console security work is covered by unit, API, browser, HTTPS-cookie, and SQLite writer-contention tests.
 
+The original GitHub history is retained. `petpal-backend` is a compatibility directory whose npm scripts delegate to `apps/backend`; its original source and deployment notes are historical references. `petpal-web` and the old mobile gitlink remain preserved from that history. The maintained console is `apps/web`.
+
 ## Install, verify, and launch
 
 Use Node 22 or 24 and run `npm ci` from the repository root. Copy `apps/backend/.env.example` to the backend's local `.env` and configure it there; do not commit secrets. Run `npm run verify`, `npm run test:e2e`, and `npm run test:load`. Chromium must first be installed with `npx playwright install chromium`; browser cookie tests also require OpenSSL (Git for Windows includes it).
