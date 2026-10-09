@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'crypto';
 
 import { env } from '../config/env';
+import { CustomError } from '../middleware/errorHandler';
 
 import {
   apiKeyRepository,
@@ -60,24 +61,32 @@ export class ApiKeyService {
   create(
     userId: string,
     name: string,
-    options: { quotaLimit?: number | null; quotaWindow?: QuotaWindow } = {},
+    options: { quotaLimit?: number | null; quotaWindow?: QuotaWindow; expiresAt?: string | null; scope?: string; ipAllowlist?: string[] } = {},
+    rotatingId?: string,
   ): { key: ApiKey; rawKey: string } {
     const generated = generateApiKey();
     const defaults = defaultQuota();
 
+    return this.keys.transaction(() => {
+    if (this.keys.listByUser(userId).filter((key) => key.id !== rotatingId && (!key.expiresAt || Date.parse(key.expiresAt) > Date.now())).length >= env.maxActiveKeys) {
+      throw new CustomError('Maximum active key count reached.', 409);
+    }
     const key = this.keys.create({
       userId,
       name,
       keyHash: generated.hash,
       prefix: generated.prefix,
       last4: generated.last4,
-      scope: 'food-safety',
+      scope: options.scope ?? 'food-safety',
       quotaLimit: options.quotaLimit === undefined ? defaults.limit : options.quotaLimit,
       quotaWindow: options.quotaWindow ?? defaults.window,
-      ipAllowlist: [],
+      ipAllowlist: options.ipAllowlist ?? [],
+      expiresAt: options.expiresAt ?? null,
     });
 
+    this.keys.audit(userId, 'key.created', key.id);
     return { key, rawKey: generated.raw };
+    });
   }
 
   list(userId: string): ApiKey[] {
@@ -85,18 +94,26 @@ export class ApiKeyService {
   }
 
   update(userId: string, id: string, patch: UpdateKeyInput): ApiKey | null {
-    return this.keys.update(userId, id, patch);
+    return this.keys.transaction(() => {
+      const key = this.keys.update(userId, id, patch);
+      if (key) this.keys.audit(userId, 'key.updated', id);
+      return key;
+    });
   }
 
   revoke(userId: string, id: string): ApiKey | null {
-    return this.keys.revoke(userId, id);
+    return this.keys.transaction(() => {
+      const key = this.keys.revoke(userId, id);
+      if (key) this.keys.audit(userId, 'key.revoked', id);
+      return key;
+    });
   }
 
   /** Resolve a presented raw key to an enabled, non-revoked key. */
   authenticate(raw: string): ApiKeyWithHash | null {
-    if (!raw) return null;
+    if (!/^sk-[a-f0-9]{48}$/.test(raw)) return null;
     const key = this.keys.findByHash(hashApiKey(raw));
-    if (!key || !key.enabled || key.revokedAt) return null;
+    if (!key || !key.enabled || key.revokedAt || (key.expiresAt && Date.parse(key.expiresAt) <= Date.now())) return null;
     return key;
   }
 
@@ -113,6 +130,18 @@ export class ApiKeyService {
   isWithinQuota(key: ApiKey): boolean {
     if (key.quotaLimit === null) return true;
     return this.usage.countSince(key.id, windowStartIso(key.quotaWindow)) < key.quotaLimit;
+  }
+
+  rotate(userId: string, id: string, graceSeconds: number): { key: ApiKey; rawKey: string; previousExpiresAt: string } | null {
+    return this.keys.transaction(() => {
+      const old = this.keys.findById(userId, id);
+      if (!old || old.revokedAt || (old.expiresAt && Date.parse(old.expiresAt) <= Date.now())) return null;
+      const previousExpiresAt = new Date(Math.min(Date.now() + graceSeconds * 1000, old.expiresAt ? Date.parse(old.expiresAt) : Infinity)).toISOString();
+      this.keys.update(userId, id, { expiresAt: previousExpiresAt });
+      const generated = this.create(userId, old.name, { quotaLimit: old.quotaLimit, quotaWindow: old.quotaWindow, scope: old.scope, ipAllowlist: old.ipAllowlist, expiresAt: old.expiresAt }, id);
+      this.keys.audit(userId, 'key.rotated', id);
+      return { ...generated, previousExpiresAt };
+    });
   }
 }
 
