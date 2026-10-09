@@ -14,12 +14,28 @@ export async function fetchWithTimeout(
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ): Promise<Response> {
   const controller = new AbortController();
+  const abort = () => controller.abort(init.signal?.reason);
+  if (init.signal?.aborted) abort(); else init.signal?.addEventListener('abort', abort, { once: true });
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    const response = await fetch(url, { ...init, signal: controller.signal });
+    // Consume the body under the same deadline; fetch resolves at headers.
+    const reader = response.body?.getReader();
+    if (!reader) return response;
+    const chunks: Uint8Array[] = [];
+    let bytes = 0;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > 2 * 1024 * 1024) { await reader.cancel(); throw new Error('Upstream response exceeded 2MB'); }
+      chunks.push(value);
+    }
+    return new Response(Buffer.concat(chunks), { status: response.status, statusText: response.statusText, headers: response.headers });
   } finally {
     clearTimeout(timer);
+    init.signal?.removeEventListener('abort', abort);
   }
 }
 
