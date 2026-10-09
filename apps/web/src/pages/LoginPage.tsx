@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { API_BASE_URL, ApiError, consoleApi } from '../api';
@@ -16,6 +16,9 @@ const PROVIDERS: { key: ProviderKey; label: string }[] = [
 /** Why the API bounced the visitor back from an OAuth attempt. */
 const OAUTH_ERRORS: Record<string, string> = {
   oauth: 'That sign-in did not complete. Try again, or use another provider.',
+  cancelled: 'Sign-in was cancelled. You can try again when ready.',
+  provider: 'The sign-in provider could not complete the request. Try again or choose another provider.',
+  state: 'This sign-in link expired or was already used. Start a new sign-in.',
 };
 
 /**
@@ -35,6 +38,8 @@ export default function LoginPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pending, setPending] = useState<ProviderKey | 'dev' | null>(null);
   const [devError, setDevError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
+  const submitting = useRef(false);
 
   const errorCode = new URLSearchParams(location.search).get('error');
   const oauthError = errorCode
@@ -42,6 +47,7 @@ export default function LoginPage() {
     : null;
 
   useEffect(() => {
+    setLoadError(null);
     let cancelled = false;
     void (async () => {
       try {
@@ -56,27 +62,34 @@ export default function LoginPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retry]);
 
   // Already signed in — straight to wherever they were headed.
   if (!loading && user) return <Navigate to={from} replace />;
 
   const startOAuth = (provider: ProviderKey) => {
+    if (submitting.current) return;
+    submitting.current = true;
     setPending(provider);
     // The API validates this and remembers it on the session across the round trip.
     window.location.assign(`${API_BASE_URL}/auth/${provider}?next=${encodeURIComponent(from)}`);
   };
 
   const devSignIn = async () => {
+    if (submitting.current) return;
+    submitting.current = true;
     setPending('dev');
     setDevError(null);
     try {
       await consoleApi.devLogin('Dev User');
       // Flipping `user` re-renders, and the guard above does the redirect.
       await refresh();
+      setPending(null);
     } catch (error) {
       setDevError(error instanceof ApiError ? error.message : 'Dev sign-in failed.');
       setPending(null);
+    } finally {
+      submitting.current = false;
     }
   };
 
@@ -110,6 +123,8 @@ export default function LoginPage() {
       )}
 
       <Reveal delay={0.15} className="mt-12">
+        {pending && <p role="status" aria-live="polite">Signing you in…</p>}
+        {loadError && <button type="button" onClick={() => setRetry((value) => value + 1)}>Retry sign-in options</button>}
         {providers === null ? (
           <p
             role={loadError ? 'alert' : undefined}
