@@ -56,3 +56,6 @@ ehthumbs.db
 
 # Local tooling state
 .kilo/
+playwright-report/
+test-results/
+artifacts/
