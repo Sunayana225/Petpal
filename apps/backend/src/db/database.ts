@@ -20,6 +20,7 @@ export function createDatabase(path: string = env.dbPath ?? dataFilePath(DEFAULT
   // WAL keeps readers from blocking the writer; meaningless for :memory:.
   if (path !== ':memory:') db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
+  db.pragma('busy_timeout = 5000');
 
   migrate(db);
   return db;
@@ -58,4 +59,8 @@ let singleton: Db | null = null;
 export function getDb(): Db {
   if (!singleton) singleton = createDatabase();
   return singleton;
+}
+export function closeDb(): void {
+  if (singleton?.open) singleton.close();
+  singleton = null;
 }

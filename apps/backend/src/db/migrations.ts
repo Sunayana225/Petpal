@@ -12,6 +12,7 @@ export interface Migration {
 }
 
 export const MIGRATIONS: Migration[] = [
+  // Append new migrations below the initial schema.
   {
     id: 1,
     name: 'initial-schema',
@@ -81,5 +82,38 @@ export const MIGRATIONS: Migration[] = [
       );
       CREATE INDEX IF NOT EXISTS idx_ai_answers_status ON ai_answers (status);
     `,
+  },
+  {
+    id: 2,
+    name: 'identity-session-key-security',
+    sql: `
+      ALTER TABLE users ADD COLUMN disabled INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE api_keys ADD COLUMN expires_at TEXT;
+      CREATE TABLE identities (
+        provider TEXT NOT NULL, provider_user_id TEXT NOT NULL,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        PRIMARY KEY(provider, provider_user_id)
+      );
+      INSERT INTO identities SELECT provider, provider_user_id, id FROM users;
+      CREATE INDEX idx_identities_user ON identities(user_id);
+      CREATE INDEX idx_sessions_user ON sessions(user_id);
+      CREATE TABLE oauth_transactions (
+        state TEXT PRIMARY KEY, sid TEXT NOT NULL, provider TEXT NOT NULL,
+        return_to TEXT, link_user_id TEXT, expires_at INTEGER NOT NULL
+      );
+      CREATE INDEX idx_oauth_expiry ON oauth_transactions(expires_at);
+      CREATE TABLE audit_events (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id),
+        action TEXT NOT NULL, resource_id TEXT, ts TEXT NOT NULL
+      );
+      CREATE INDEX idx_audit_user_ts ON audit_events(user_id, ts);
+      UPDATE users SET role = 'user' WHERE provider = 'dev';
+    `,
+  },
+  {
+    id: 3,
+    name: 'session-revocation-tombstones',
+    sql: `CREATE TABLE session_revocations (sid TEXT PRIMARY KEY, expires_at INTEGER NOT NULL);
+          CREATE INDEX idx_revocations_expiry ON session_revocations(expires_at);`,
   },
 ];
