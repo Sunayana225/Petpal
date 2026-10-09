@@ -1,6 +1,7 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { Request, Response, Router } from 'express';
 
 import { API_VERSION } from '../config/version';
+import { answerCache } from '../services/answerCache';
 import { requireAdmin } from '../middleware/auth';
 import { requireApiKey, trackUsage } from '../middleware/apiKeyAuth';
 import { healthCheck } from '../middleware/errorHandler';
@@ -15,6 +16,8 @@ import { meRouter } from './keys';
 import { monitoringRouter } from './monitoring';
 import { sessionsRouter } from './sessions';
 import { getDb } from '../db/database';
+import { createBatchRouter } from './foodSafety/batch';
+import { checkInput } from './foodSafety/input';
 import { openapi } from '../config/openapi';
 
 /** What the route layer needs handed to it. */
@@ -49,6 +52,13 @@ export function createApiRouter({ foodSafety }: ApiDependencies): Router {
   api.use('/gemini', geminiRouter);
   api.use('/me', meRouter);
   api.use('/sessions', sessionsRouter);
+  api.get('/admin/cache', requireAdmin, (_req, res) => {
+    res.set('Cache-Control', 'no-store').json({ food: foodSafety.cache.stats, dataset: foodSafety.datasetCache.stats, durable: answerCache.stats(), reviewRevision: answerCache.revision });
+  });
+  api.delete('/admin/cache', requireAdmin, (_req, res) => {
+    foodSafety.cache.clear(); foodSafety.datasetCache.clear(); answerCache.clearMemory();
+    res.set('Cache-Control', 'no-store').json({ ok: true, message: 'Memory caches cleared; durable review records retained.' });
+  });
   api.use('/admin', adminRouter);
   // Metrics and process status disclose internals, so they require admin access.
   api.use('/monitoring', requireAdmin, monitoringRouter);
@@ -58,30 +68,22 @@ export function createApiRouter({ foodSafety }: ApiDependencies): Router {
   const dataset = createDatasetRouter(foodSafety);
 
   // Public path: the check is open, the dataset needs a key. (Requests to the
-  // dataset are authenticated but not metered here — only `/v1` bills usage.)
+  // dataset are authenticated and admitted against the same quota as `/v1`.)
   const publicFoodSafety = Router();
   publicFoodSafety.use(check);
-  publicFoodSafety.use(requireApiKey, dataset);
+  publicFoodSafety.use(requireApiKey, createBatchRouter(foodSafety), dataset);
   api.use('/food-safety', publicFoodSafety);
 
   // Versioned path: the check and the dataset, all keyed and metered once.
   const versioned = Router();
   versioned.use(check);
+  versioned.use(createBatchRouter(foodSafety));
   versioned.use(dataset);
   api.use('/v1/food-safety', requireApiKey, trackUsage, versioned);
 
   // Legacy alias for `GET /api/check?animal=<pet>&food=<food>` — maps `animal`
   // onto `pet` and reuses the exact same handler, so behaviour cannot diverge.
-  api.get(
-    '/check',
-    (req: Request, _res: Response, next: NextFunction) => {
-      if (!req.query.pet && req.query.animal) {
-        req.query.pet = String(req.query.animal);
-      }
-      next();
-    },
-    createCheckHandler(foodSafety),
-  );
+  api.get('/check', checkInput(true), createCheckHandler(foodSafety));
 
   return api;
 }
@@ -111,6 +113,7 @@ function infoHandler(_req: Request, res: Response): void {
     version: API_VERSION,
     description: 'API for checking pet food safety across multiple pet types',
     supportedPets: [...SUPPORTED_PET_KEYS],
+    capabilities: { datasetPagination: ['offset', 'cursor'], batchChecks: { maxItems: 20, mode: 'local', keyed: true }, comparison: { maxPets: 10, mode: 'local', keyed: true }, conditionalDatasets: true, localChecks: true },
     endpoints: {
       root: '/',
       health: '/api/health',

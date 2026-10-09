@@ -33,6 +33,7 @@ export function requireApiKey(req: Request, res: Response, next: NextFunction): 
   const match = /^Bearer\s+(.+)$/i.exec(header);
 
   if (!match) {
+    res.set('WWW-Authenticate', 'Bearer realm="petpal"');
     res.status(401).json({
       error: 'Unauthorized',
       message: 'An API key is required: Authorization: Bearer <key>',
@@ -42,15 +43,17 @@ export function requireApiKey(req: Request, res: Response, next: NextFunction): 
 
   const key = apiKeyService().authenticate(match[1].trim());
   if (!key) {
+    res.set('WWW-Authenticate', 'Bearer realm="petpal", error="invalid_token"');
     res.status(401).json({ error: 'Unauthorized', message: 'Invalid or revoked API key.' });
     return;
   }
   const owner = userRepository().findById(key.userId);
   if (!owner || owner.disabled) {
+    res.set('WWW-Authenticate', 'Bearer realm="petpal", error="invalid_token"');
     res.status(401).json({ error: 'Unauthorized', message: 'Account unavailable.' });
     return;
   }
-  const neededScope = req.path.toLowerCase().replace(/\/+$/, '') === '/check' ? 'check' : 'dataset';
+  const neededScope = ['/check', '/batch-check', '/compare'].includes(req.path.toLowerCase().replace(/\/+$/, '')) ? 'check' : 'dataset';
   if (key.scope !== 'food-safety' && key.scope !== neededScope) {
     res.status(403).json({ error: 'Forbidden', message: 'API key scope does not permit this endpoint.' });
     return;
@@ -98,6 +101,7 @@ export function trackUsage(req: Request, res: Response, next: NextFunction): voi
   if (res.locals.usageId) { next(); return; }
   const key = presentedKey(req);
   if (!key) {
+    res.set('WWW-Authenticate', 'Bearer realm="petpal", error="invalid_token"');
     next();
     return;
   }
