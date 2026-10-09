@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import { createHash, timingSafeEqual } from 'crypto';
 
 import { env } from '../config/env';
 import type { User } from '../repositories/userRepository';
@@ -32,7 +33,11 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
   }
 
   const expected = env.adminToken;
-  if (expected && req.header('x-admin-token') === expected) {
+  const supplied = req.header('x-admin-token');
+  if (expected && supplied && timingSafeEqual(
+    createHash('sha256').update(supplied).digest(),
+    createHash('sha256').update(expected).digest(),
+  )) {
     next();
     return;
   }
@@ -48,10 +53,11 @@ function allowedOrigins(): string[] {
 }
 
 /** A request from our own origin is always trusted. */
-function isSameOrigin(origin: string, host: string | undefined): boolean {
+function isSameOrigin(origin: string, req: Request): boolean {
+  const host = req.header('host');
   if (!host) return false;
   try {
-    return new URL(origin).host === host;
+    return new URL(origin).origin === `${req.protocol}://${host}`;
   } catch {
     return false;
   }
@@ -69,7 +75,11 @@ export function checkOrigin(req: Request, res: Response, next: NextFunction): vo
   }
 
   const origin = req.header('origin');
-  if (!origin || allowedOrigins().includes(origin) || isSameOrigin(origin, req.header('host'))) {
+  if (!origin && req.header('sec-fetch-site') === 'cross-site') {
+    res.status(403).json({ error: 'Forbidden', message: 'Cross-site request blocked.' });
+    return;
+  }
+  if (!origin || allowedOrigins().includes(origin) || isSameOrigin(origin, req)) {
     next();
     return;
   }
