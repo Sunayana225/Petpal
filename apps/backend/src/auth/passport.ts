@@ -5,6 +5,8 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { env } from '../config/env';
 import { userRepository, type OAuthProfile, type User } from '../repositories/userRepository';
 import { logger } from '../utils/logger';
+import type { Request } from 'express';
+import { OAuthStateStore } from './security';
 
 export type OAuthProvider = 'github' | 'google';
 
@@ -12,17 +14,20 @@ interface NormalisableProfile {
   id: string;
   displayName?: string;
   username?: string;
-  emails?: { value: string }[];
+  emails?: { value: string; verified?: boolean; primary?: boolean }[];
+  _json?: { email_verified?: boolean; verified_email?: boolean };
   photos?: { value: string }[];
 }
 
 function normalize(provider: OAuthProvider, profile: NormalisableProfile): OAuthProfile {
+  const email = profile.emails?.find((value) => value.primary && value.verified) ?? profile.emails?.find((value) => value.verified) ?? profile.emails?.[0];
   return {
     provider,
     providerUserId: profile.id,
-    email: profile.emails?.[0]?.value ?? null,
+    email: email?.value ?? null,
     name: profile.displayName ?? profile.username ?? null,
     avatarUrl: profile.photos?.[0]?.value ?? null,
+    emailVerified: email?.verified === true || profile._json?.email_verified === true || profile._json?.verified_email === true,
   };
 }
 
@@ -43,14 +48,27 @@ export function configurePassport(): void {
   configured = true;
 
   passport.serializeUser((user, done) => done(null, (user as User).id));
-  passport.deserializeUser((id, done) => done(null, userRepository().findById(String(id))));
+  passport.deserializeUser((id, done) => {
+    try {
+      const user = userRepository().findById(String(id));
+      done(null, user && !user.disabled ? user : false);
+    } catch (error) { done(error); }
+  });
 
   const base = callbackBase();
   const verify =
     (provider: OAuthProvider) =>
-    (_accessToken: string, _refreshToken: string, profile: NormalisableProfile, done: (err: unknown, user?: User) => void) => {
+    (req: Request, _accessToken: string, _refreshToken: string, profile: NormalisableProfile, done: (err: unknown, user?: User) => void) => {
       try {
-        done(null, userRepository().upsertFromOAuth(normalize(provider, profile)));
+        const normalized = normalize(provider, profile);
+        const linkId = req.session.oauthLinkUserId;
+        if (linkId && (!(req.user as User | undefined)?.id || (req.user as User).id !== linkId ||
+            !req.session.authenticatedAt || Date.now() - req.session.authenticatedAt > env.reauthMs)) {
+          return done(new Error('Account linking requires recent authentication'));
+        }
+        const user = linkId ? userRepository().link(linkId, normalized) : userRepository().upsertFromOAuth(normalized);
+        if (user.disabled) return done(new Error('Account disabled'));
+        done(null, user);
       } catch (error) {
         done(error);
       }
@@ -63,6 +81,10 @@ export function configurePassport(): void {
           clientID: env.githubClientId as string,
           clientSecret: env.githubClientSecret as string,
           callbackURL: `${base}/api/auth/github/callback`,
+          store: new OAuthStateStore('github'),
+          passReqToCallback: true,
+          scope: ['user:email'],
+          allRawEmails: true,
         },
         verify('github'),
       ),
@@ -78,6 +100,8 @@ export function configurePassport(): void {
           clientID: env.googleClientId as string,
           clientSecret: env.googleClientSecret as string,
           callbackURL: `${base}/api/auth/google/callback`,
+          store: new OAuthStateStore('google'),
+          passReqToCallback: true,
         },
         verify('google'),
       ),
