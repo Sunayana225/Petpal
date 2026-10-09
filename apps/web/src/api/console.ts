@@ -6,7 +6,7 @@ import type {
   QuotaWindow,
   UsageResponse,
 } from '../domain/types';
-import { requestJson } from './client';
+import { requestJson, setCsrfToken } from './client';
 
 /** The session-authenticated endpoints behind the developer console. */
 export const consoleApi = {
@@ -15,12 +15,16 @@ export const consoleApi = {
     return requestJson<AuthProviders>('/auth/providers');
   },
 
-  me(): Promise<{ user: AuthUser | null }> {
-    return requestJson<{ user: AuthUser | null }>('/auth/me');
+  async me(): Promise<{ user: AuthUser | null }> {
+    const result = await requestJson<{ user: AuthUser | null; csrfToken: string | null }>('/auth/me');
+    setCsrfToken(result.csrfToken);
+    return result;
   },
 
-  logout(): Promise<{ ok: true }> {
-    return requestJson<{ ok: true }>('/auth/logout', { method: 'POST' });
+  async logout(): Promise<{ ok: true }> {
+    const result = await requestJson<{ ok: true }>('/auth/logout', { method: 'POST' });
+    setCsrfToken(null);
+    return result;
   },
 
   /**
@@ -64,4 +68,12 @@ export const consoleApi = {
   usage(): Promise<UsageResponse> {
     return requestJson<UsageResponse>('/me/usage');
   },
+  sessions(): Promise<{ sessions: { id: string; current: boolean; lastActiveAt: number; expiresAt: number }[] }> {
+    return requestJson('/sessions');
+  },
+  revokeSession(id: string): Promise<{ ok: true }> { return requestJson(`/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' }); },
+  logoutAll(): Promise<{ ok: true }> { return requestJson('/sessions', { method: 'DELETE' }); },
+  identities(): Promise<{ identities: { provider: string; providerUserId: string }[] }> { return requestJson('/auth/account/identities'); },
+  unlink(provider: string): Promise<{ ok: true }> { return requestJson(`/auth/account/identities/${encodeURIComponent(provider)}`, { method: 'DELETE' }); },
+  rotateKey(id: string, graceSeconds = 300): Promise<CreatedApiKey> { return requestJson(`/me/keys/${encodeURIComponent(id)}/rotate`, { method: 'POST', body: JSON.stringify({ graceSeconds }) }); },
 };
