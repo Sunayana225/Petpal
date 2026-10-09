@@ -19,6 +19,7 @@ import { getDb } from '../db/database';
 import { createBatchRouter } from './foodSafety/batch';
 import { checkInput } from './foodSafety/input';
 import { openapi } from '../config/openapi';
+import { createRecallRouter } from './recalls';
 
 /** What the route layer needs handed to it. */
 export interface ApiDependencies {
@@ -46,6 +47,7 @@ export function createApiRouter({ foodSafety }: ApiDependencies): Router {
   });
   api.get('/info', infoHandler);
   api.get('/openapi.json', (_req, res) => res.json(openapi));
+  api.use('/recalls', createRecallRouter());
 
   // ---- console & operations ---------------------------------------------------
   api.use('/auth', authRouter);

@@ -20,7 +20,8 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "start:local": "npm run build && npm start",
-    "deploy": "npm run build:prod && npm run start:prod"
+    "deploy": "npm run build:prod && npm run start:prod",
+    "sync:recalls": "ts-node src/scripts/syncRecallSources.ts"
   },
   "keywords": [
     "pet-food-safety",
@@ -35,6 +36,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "better-sqlite3": "^13.0.3",
+    "cheerio": "^1.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",

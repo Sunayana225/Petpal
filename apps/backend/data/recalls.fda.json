@@ -1,0 +1,110 @@
+{
+  "publisher": "US Food and Drug Administration",
+  "sourceUrl": "https://www.fda.gov/animal-veterinary/safety-health/recalls-withdrawals",
+  "retrievedAt": "2026-10-09T16:38:09.968Z",
+  "country": "US",
+  "coverage": "Partial snapshot of the displayed animal/veterinary listing; includes medicines and supplements. Not a complete recall registry. Unmarked notices may be ongoing or completed. No match is not a safety clearance.",
+  "contentHash": "e3918e42ca3c10e5b22b28c4991a52dfc2c26450858478c09e9f5f8203418243",
+  "records": [
+    {
+      "id": "7c900038a694eec8d3b10d32233bd73287cbba22cfbbc0883a7111e44392ccd7",
+      "date": "2026-09-08",
+      "brand": "FI",
+      "product": "Supplements",
+      "reason": "Potential to be contaminated with Salmonella",
+      "company": "Fi Barking Labs Corp",
+      "status": "not-marked-terminated",
+      "sourceUrl": "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/fi-recalls-supplements-dogs-because-possible-salmonella-contamination"
+    },
+    {
+      "id": "30d026aadd4e9935a35d219b93ea7fc7cd02d93e13c228826611dfc2de1eb1c1",
+      "date": "2026-08-28",
+      "brand": "Northwest Naturals",
+      "product": "Chicken Recipe",
+      "reason": "Potential contamination with Salmonella and/or Listeria monocytogenes",
+      "company": "Northwest Naturals",
+      "status": "not-marked-terminated",
+      "sourceUrl": "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/northwest-naturals-voluntarily-recalls-two-raw-pet-food-products-because-possible-salmonella"
+    },
+    {
+      "id": "cb1a6ea26970c5f33a715911bdb28dd908eef17a5abf00da142d60dc10b64ab7",
+      "date": "2026-08-26",
+      "brand": "Shelter’s Choice, Breeder’s Edge",
+      "product": "Feline Milk Replacers",
+      "reason": "Low levels of potassium, copper, folic acid, choline and/or pyridoxine (vitamin B6)",
+      "company": "Revival Animal Health",
+      "status": "not-marked-terminated",
+      "sourceUrl": "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/revival-animal-health-llc-voluntarily-recalls-feline-milk-replacers-due-inconsistent-levels-vitamins"
+    },
+    {
+      "id": "f710fdcd25516b43e7a6b9ebb646980b8d3b775bead12b14594db5d3c3f3954a",
+      "date": "2026-08-21",
+      "brand": "Fromm",
+      "product": "Fromm wet canned dog food",
+      "reason": "Potential metal contamination",
+      "company": "Fromm Family Foods LLC",
+      "status": "not-marked-terminated",
+      "sourceUrl": "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/fromm-family-foods-voluntarily-recalls-turkey-pate-wet-food-dogs-and-diner-classic-milos-meatloaf"
+    },
+    {
+      "id": "5770472f6fafb68dbeed2577e4180c935f2f66f0a37ba80c826c746f75207d59",
+      "date": "2026-08-17",
+      "brand": "Oma’s Pride",
+      "product": "Canine Food",
+      "reason": "Contaminated with Salmonella",
+      "company": "Miller Foods, Inc.",
+      "status": "not-marked-terminated",
+      "sourceUrl": "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/updated-omas-pride-voluntarily-recalls-one-lot-woof-complete-canine-chicken-recipe-6-lb-bag-because"
+    },
+    {
+      "id": "927093b2be4953dce2e10dd98722e92bf27071c78414a73c62db507a89be445a",
+      "date": "2026-08-03",
+      "brand": "American Regent, Inc. Animal Health",
+      "product": "Adequan Canine Injection and Adequan i.m Injection for horses",
+      "reason": "Visible glass fiber material in the product",
+      "company": "American Regent, Inc. Animal Health",
+      "status": "not-marked-terminated",
+      "sourceUrl": "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/american-regent-inc-animal-health-issues-nationwide-recall-two-lots-adequanr-canine-and-two-lots"
+    },
+    {
+      "id": "4af35d1a1d278839b2accc4b95e81d6e26013a14551fd13b96ec809c320121ee",
+      "date": "2026-07-02",
+      "brand": "Pedigree",
+      "product": "High Protein Chopped Chicken & Duck Flavor Wet Dog Food",
+      "reason": "Potential foreign plastic contamination",
+      "company": "Mars Petcare US, Inc.",
+      "status": "not-marked-terminated",
+      "sourceUrl": "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/voluntary-recall-two-lots-pedigreer-can-high-protein-chopped-chicken-duck-flavor-wet-dog-food-due"
+    },
+    {
+      "id": "c35d56e0dc16797aff9d13318ed21ce5ee1d313c0e24b58d1da952a3b8a6ed19",
+      "date": "2026-06-25",
+      "brand": "Breeder’s Edge, Shelter’s Choice",
+      "product": "Canine milk replacer",
+      "reason": "Variable levels of Vitamin D",
+      "company": "Revival Animal Health",
+      "status": "not-marked-terminated",
+      "sourceUrl": "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/revival-animal-health-llc-voluntarily-recalls-canine-and-gm-milk-replacers-due-low-or-elevated"
+    },
+    {
+      "id": "867ab080c2679b6b3fd21efb70ae4bf351a400a5e383a73b2a870ac9ebf3343f",
+      "date": "2026-06-08",
+      "brand": "Steve’s Real Food",
+      "product": "Freeze Dried Chicken Recipe Cat and Dog Food",
+      "reason": "May contain low levels of thiamine (Vitamin B1)",
+      "company": "Go Raw, LLC.",
+      "status": "not-marked-terminated",
+      "sourceUrl": "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/go-raw-llc-expands-voluntary-recall-include-one-lot-steves-real-food-freeze-dried-chicken-recipe-due"
+    },
+    {
+      "id": "89f891885fe3530f80b9ea75f82a98f806ce38dc1f9599fb2cfecfbdba445382",
+      "date": "2026-05-22",
+      "brand": "Raaw Energy",
+      "product": "Dog Food",
+      "reason": "Due to possible Listeria contamination",
+      "company": "Raaw Energy",
+      "status": "not-marked-terminated",
+      "sourceUrl": "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/raaw-energy-expands-recall-dog-food-because-listeria-monocytogenes-health-risk"
+    }
+  ]
+}

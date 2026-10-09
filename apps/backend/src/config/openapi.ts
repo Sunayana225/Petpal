@@ -22,6 +22,7 @@ const keySchema = { type: 'object', additionalProperties: false, properties: {
 } };
 const checkSchema = { type: 'object', additionalProperties: false, required: ['pet', 'food'], properties: { pet: { type: 'string', minLength: 1, maxLength: 50 }, food: { type: 'string', minLength: 1, maxLength: 100 }, mode: { enum: ['auto', 'local'], default: 'auto' } } };
 const paths: Record<string, object> = {
+  '/recalls': { get: operation('Search a dated partial US FDA animal/veterinary recall listing; no match is not safety clearance', [], [parameter('q'), ...paging, parameter('status')]) },
   '/health': { get: operation('Process liveness') }, '/ready': { get: operation('Database readiness') }, '/info': { get: operation('API information') },
   '/auth/providers': { get: operation('Configured login providers') }, '/auth/me': { get: operation('Current user and CSRF token') },
   '/auth/logout': { post: operation('Destroy current session', session, [csrf]) },
