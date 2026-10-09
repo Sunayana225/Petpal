@@ -13,6 +13,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import TokensPage from './pages/TokensPage';
 import UsagePage from './pages/UsagePage';
+import SecurityPage from './pages/SecurityPage';
 
 export default function App() {
   const location = useLocation();
@@ -36,6 +37,7 @@ export default function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/docs" element={<DocsPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/security" element={<RequireAuth><SecurityPage /></RequireAuth>} />
                 <Route
                   path="/dashboard"
                   element={

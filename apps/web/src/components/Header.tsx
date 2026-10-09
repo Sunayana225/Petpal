@@ -14,6 +14,7 @@ const CONSOLE_LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/tokens', label: 'Tokens' },
   { to: '/usage', label: 'Usage' },
+  { to: '/security', label: 'Security' },
 ];
 
 /**
@@ -26,6 +27,15 @@ export default function Header() {
   const { scrollY } = useScroll();
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const logout = async () => {
+    if (signingOut) return;
+    setSigningOut(true); setLogoutError(null);
+    try { await signOut(); }
+    catch (error) { setLogoutError(error instanceof Error ? error.message : 'Sign out failed. Try again.'); }
+    finally { setSigningOut(false); }
+  };
 
   useMotionValueEvent(scrollY, 'change', (value) => setScrolled(value > 16));
 
@@ -95,9 +105,11 @@ export default function Header() {
               >
                 Console
               </Link>
+              <Link to="/security" className="text-[12px] uppercase text-charcoal">Security</Link>
               <button
                 type="button"
-                onClick={() => void signOut()}
+                onClick={() => void logout()}
+                disabled={signingOut}
                 className="text-[12px] uppercase tracking-wide-cap text-mist transition-colors duration-500 hover:text-ink"
               >
                 Sign out
@@ -167,7 +179,8 @@ export default function Header() {
                 <motion.li initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-4">
                   <button
                     type="button"
-                    onClick={() => void signOut()}
+                    onClick={() => void logout()}
+                    disabled={signingOut}
                     className="text-[12px] uppercase tracking-wide-cap text-mist"
                   >
                     Sign out
@@ -178,6 +191,7 @@ export default function Header() {
           </motion.nav>
         )}
       </AnimatePresence>
+      {logoutError && <p role="alert" className="px-5 pb-3 text-sm text-unsafe">{logoutError}</p>}
     </header>
   );
 }
