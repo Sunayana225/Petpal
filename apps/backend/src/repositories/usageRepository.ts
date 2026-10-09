@@ -80,10 +80,10 @@ export class UsageRepository {
     return row.count;
   }
 
-  recentForKey(keyId: string, limit: number): UsageEvent[] {
+  recentForKey(keyId: string, limit: number, offset = 0): UsageEvent[] {
     const rows = this.db
-      .prepare('SELECT * FROM usage_events WHERE key_id = ? ORDER BY ts DESC LIMIT ?')
-      .all(keyId, limit) as UsageRow[];
+      .prepare('SELECT * FROM usage_events WHERE key_id = ? ORDER BY ts DESC, rowid DESC LIMIT ? OFFSET ?')
+      .all(keyId, limit, offset) as UsageRow[];
     return rows.map(toEvent);
   }
 
@@ -114,16 +114,16 @@ export class UsageRepository {
       .all(userId, sinceIso) as DailyCount[];
   }
 
-  recentForUser(userId: string, limit: number): UsageEvent[] {
+  recentForUser(userId: string, limit: number, offset = 0): UsageEvent[] {
     const rows = this.db
       .prepare(
         `SELECT u.* FROM usage_events u
            JOIN api_keys k ON k.id = u.key_id
           WHERE k.user_id = ?
-          ORDER BY u.ts DESC
-          LIMIT ?`,
+          ORDER BY u.ts DESC, u.rowid DESC
+          LIMIT ? OFFSET ?`,
       )
-      .all(userId, limit) as UsageRow[];
+      .all(userId, limit, offset) as UsageRow[];
     return rows.map(toEvent);
   }
 
@@ -143,6 +143,22 @@ export class UsageRepository {
       .get(userId, sinceIso) as { count: number };
 
     return { total: total.count, since: since.count };
+  }
+
+  /** Admission and usage reservation happen under SQLite's writer lock. */
+  reserve(key: { id: string; userId: string; quotaLimit: number | null }, since: string, dailySince: string, accountLimit: number, burstLimit: number, method: string, path: string): string | null {
+    return this.db.transaction(() => {
+      if (key.quotaLimit !== null && this.countSince(key.id, since) >= key.quotaLimit) return null;
+      if (this.totalsForUser(key.userId, dailySince).since >= accountLimit) return null;
+      if (this.countSince(key.id, new Date(Date.now() - 60000).toISOString()) >= burstLimit) return null;
+      const id = randomUUID();
+      this.db.prepare('INSERT INTO usage_events VALUES (?, ?, ?, ?, ?, 0, 0, NULL)').run(id, key.id, new Date().toISOString(), method, path);
+      return id;
+    }).immediate();
+  }
+
+  complete(id: string, status: number, latencyMs: number): void {
+    this.db.prepare('UPDATE usage_events SET status = ?, latency_ms = ? WHERE id = ?').run(status, latencyMs, id);
   }
 }
 
