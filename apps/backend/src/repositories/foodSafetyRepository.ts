@@ -1,4 +1,5 @@
 import { manyPetsFoodSafetyData } from '../datasets/manyPets';
+import { createHash } from 'crypto';
 import type { FoodItem, SafetyCategory } from '../domain/foodSafety';
 import { findDataFile, readJsonFile } from '../utils/dataFiles';
 import { logger } from '../utils/logger';
@@ -83,6 +84,7 @@ function loadLegacyDatabase(): LegacyDatabase {
  * only if it appears in the lists returned by `getSafeFoods()` and friends.
  */
 export class FoodSafetyRepository {
+  revision = '';
   /** pet key -> (normalised food key -> record) */
   private readonly index = new Map<PetKey, Map<string, IndexedFood>>();
 
@@ -123,6 +125,9 @@ export class FoodSafetyRepository {
     }
 
     this.rebuildLookup();
+    const records = [...this.index.values()].flatMap(bucket => [...bucket.values()])
+      .sort((a, b) => `${a.pet}:${a.food}`.localeCompare(`${b.pet}:${b.food}`, 'en'));
+    this.revision = createHash('sha256').update(JSON.stringify(records)).digest('hex').slice(0, 24);
   }
 
   /**

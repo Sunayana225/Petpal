@@ -17,6 +17,7 @@ export interface AnswerSink {
 
 /** A sink that can also serve previously stored answers. */
 export interface AnswerStore extends AnswerSink {
+  readonly revision?: number;
   getServable(petKey: string, foodKey: string): FoodSafetyResult | null;
   /** Only a human-approved answer — used to short-circuit BYOK requests. */
   getApproved(petKey: string, foodKey: string): FoodSafetyResult | null;
@@ -46,6 +47,12 @@ function serveUnreviewed(): boolean {
 export class DurableAnswerCache implements AnswerStore {
   private readonly memory = new TtlCache<FoodSafetyResult>(500);
 
+  private memoryRevision = -1;
+
+  get revision(): number { return this.repo.revision * 2 + (serveUnreviewed() ? 1 : 0); }
+
+  clearMemory(): void { this.memory.clear(); }
+
   constructor(private readonly explicitRepo?: AiAnswerRepository) {}
 
   private get repo(): AiAnswerRepository {
@@ -53,13 +60,16 @@ export class DurableAnswerCache implements AnswerStore {
   }
 
   getServable(petKey: string, foodKey: string): FoodSafetyResult | null {
+    const revision = this.revision;
+    if (this.memoryRevision !== revision) { this.memory.clear(); this.memoryRevision = revision; }
     const key = `${petKey}|${foodKey}`;
 
     const cached = this.memory.get(key);
     if (cached) return cached;
 
     const stored = this.repo.find(petKey, foodKey);
-    if (!stored || stored.status === 'rejected') return null;
+    if (!stored) return null;
+    if (stored.status === 'rejected') return { pet: petKey, food: foodKey, safety: 'unknown', source: 'none', message: 'This answer was rejected during review. Please consult your veterinarian.' };
 
     if (stored.status === 'pending' && !serveUnreviewed()) {
       // Still avoids a repeat AI call, but does not serve unreviewed advice.
@@ -73,7 +83,7 @@ export class DurableAnswerCache implements AnswerStore {
       };
     }
 
-    this.memory.set(key, stored.payload, TTL.ai);
+    this.memory.set(key, stored.payload, stored.expiresAt === null ? TTL.ai : Math.max(0, Math.min(TTL.ai, stored.expiresAt - Date.now())));
     return stored.payload;
   }
 
@@ -93,7 +103,7 @@ export class DurableAnswerCache implements AnswerStore {
     const ttlMs = answerTtlMs(result.safety);
     const status: AnswerStatus = result.safety === 'unknown' ? 'cached' : 'pending';
 
-    this.repo.save({
+    const stored = this.repo.save({
       pet: petKey,
       food,
       safety: result.safety,
@@ -103,11 +113,12 @@ export class DurableAnswerCache implements AnswerStore {
       ttlMs,
     });
 
-    this.memory.set(`${petKey}|${food}`, result, ttlMs);
+    this.memory.delete(`${petKey}|${food}`);
+    if (stored.status !== 'rejected' && (stored.status !== 'pending' || serveUnreviewed())) this.memory.set(`${petKey}|${food}`, stored.payload, stored.expiresAt === null ? TTL.ai : Math.max(0, Math.min(ttlMs, stored.expiresAt - Date.now())));
   }
 
-  list(status?: AnswerStatus): StoredAnswer[] {
-    return this.repo.list(status);
+  list(status?: AnswerStatus, limit = 100, offset = 0): StoredAnswer[] {
+    return this.repo.list(status, limit, offset);
   }
 
   stats(): AnswerStats {

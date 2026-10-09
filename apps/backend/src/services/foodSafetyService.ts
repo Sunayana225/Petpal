@@ -53,6 +53,8 @@ function buildMessage(
  * composed and tested without reaching for module-level singletons.
  */
 export class FoodSafetyService {
+  readonly datasetCache = new TtlCache<IndexedFood[]>(32);
+  private durableRevision: number | undefined;
   private readonly answerCache = new TtlCache<FoodSafetyResult>(500);
 
   constructor(
@@ -60,6 +62,25 @@ export class FoodSafetyService {
     private readonly sources: AnswerSource[] = defaultAnswerSources(),
     private readonly durable: AnswerStore | undefined = answerCache,
   ) {}
+
+  /** A curated-only lookup never starts an upstream request. */
+  checkLocal(pet: string, food: string): FoodSafetyResult {
+    const record = this.repository.search(food, pet);
+    return record ? this.fromDatabase(record, pet, food) : {
+      pet, food, safety: 'unknown', source: 'none', message: buildMessage('unknown', food, pet),
+    };
+  }
+
+  /** Re-echo batch aliases without repeating an already resolved local lookup. */
+  withLocalInput(result: FoodSafetyResult, pet: string, food: string): FoodSafetyResult {
+    return { ...result, pet, food, message: buildMessage(result.safety, food, pet, result.details?.source) };
+  }
+
+  getFoods(pet?: string): IndexedFood[] {
+    return (pet ? [pet] : this.getSupportedPets()).flatMap(species => this.repository.getFoods(species));
+  }
+
+  get revision(): string { return this.repository.revision; }
 
   getSupportedPets(): string[] {
     return this.repository.getSupportedPets();
@@ -94,6 +115,9 @@ export class FoodSafetyService {
     food: string,
     options: { apiKey?: string; requestId?: string; signal?: AbortSignal } = {},
   ): Promise<FoodSafetyResult> {
+    if (this.durableRevision !== this.durable?.revision) {
+      this.answerCache.clear(); this.durableRevision = this.durable?.revision;
+    }
     const startedAt = Date.now();
     const log = logger.child({ requestId: options.requestId ?? null, pet, food });
 
@@ -200,7 +224,7 @@ export class FoodSafetyService {
             ms: Date.now() - sourceStartedAt,
           });
           this.persist(petLabel, result, apiKey, log);
-          return result;
+          return this.durable?.getServable(petLabel, normalizeFoodKey(food)) ?? result;
         }
         log.debug('remote source declined', {
           source: source.source,

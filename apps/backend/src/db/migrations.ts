@@ -116,4 +116,17 @@ export const MIGRATIONS: Migration[] = [
     sql: `CREATE TABLE session_revocations (sid TEXT PRIMARY KEY, expires_at INTEGER NOT NULL);
           CREATE INDEX idx_revocations_expiry ON session_revocations(expires_at);`,
   },
+  {
+    id: 4,
+    name: 'review-cache-revision',
+    sql: `CREATE TABLE review_revision (id INTEGER PRIMARY KEY CHECK(id = 1), revision INTEGER NOT NULL);
+          INSERT INTO review_revision VALUES (1, 0);
+          CREATE TRIGGER review_decision_revision AFTER UPDATE OF status ON ai_answers
+            WHEN OLD.status <> NEW.status
+            BEGIN UPDATE review_revision SET revision = revision + 1 WHERE id = 1; END;
+          CREATE TRIGGER review_delete_revision AFTER DELETE ON ai_answers
+            BEGIN UPDATE review_revision SET revision = revision + 1 WHERE id = 1; END;
+          UPDATE ai_answers SET expires_at = NULL WHERE status = 'rejected';
+          CREATE INDEX idx_answers_queue ON ai_answers(status, created_at DESC, id DESC);`,
+  },
 ];

@@ -78,8 +78,8 @@ export class AiAnswerRepository {
   constructor(private readonly db: Db) {}
 
   /**
-   * Insert or refresh the answer for a `pet | food`. An already-`approved`
-   * answer is never downgraded by a later capture.
+   * Insert or refresh the answer for a `pet | food`. An already-approved or rejected
+   * answer is never overwritten by a later capture.
    */
   save(input: SaveAnswerInput): StoredAnswer {
     const expiresAt = input.ttlMs === null ? null : Date.now() + input.ttlMs;
@@ -94,7 +94,7 @@ export class AiAnswerRepository {
            source     = excluded.source,
            status     = excluded.status,
            expires_at = excluded.expires_at
-         WHERE ai_answers.status <> 'approved'`,
+         WHERE ai_answers.status NOT IN ('approved', 'rejected')`,
       )
       .run({
         id: randomUUID(),
@@ -128,23 +128,27 @@ export class AiAnswerRepository {
     return row ? toStored(row) : null;
   }
 
-  list(status?: AnswerStatus): StoredAnswer[] {
+  get revision(): number {
+    return (this.db.prepare('SELECT revision FROM review_revision WHERE id = 1').get() as { revision: number }).revision;
+  }
+
+  list(status?: AnswerStatus, limit = 100, offset = 0): StoredAnswer[] {
     const rows = status
       ? (this.db
-          .prepare('SELECT * FROM ai_answers WHERE status = ? ORDER BY created_at DESC')
-          .all(status) as AnswerRow[])
-      : (this.db.prepare('SELECT * FROM ai_answers ORDER BY created_at DESC').all() as AnswerRow[]);
+          .prepare('SELECT * FROM ai_answers WHERE status = ? ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?')
+          .all(status, limit, offset) as AnswerRow[])
+      : (this.db.prepare('SELECT * FROM ai_answers ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?').all(limit, offset) as AnswerRow[]);
     return rows.map(toStored);
   }
 
-  /** Approving makes an answer permanent (no expiry); rejecting keeps its TTL. */
+  /** Review decisions are permanent until an explicit later decision. */
   setStatus(id: string, status: AnswerStatus): StoredAnswer | null {
     const existing = this.findById(id);
     if (!existing) return null;
 
     this.db
       .prepare('UPDATE ai_answers SET status = ?, expires_at = ? WHERE id = ?')
-      .run(status, status === 'approved' ? null : existing.expiresAt, id);
+      .run(status, status === 'approved' || status === 'rejected' ? null : existing.expiresAt, id);
 
     return this.findById(id);
   }

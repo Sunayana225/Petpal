@@ -5,6 +5,9 @@ import type { AnswerStatus } from '../repositories/aiAnswerRepository';
 import { answerCache } from '../services/answerCache';
 import { getDb } from '../db/database';
 import { requireRecentAuth } from '../auth/security';
+import { paging, pageOf, validate } from '../middleware/validation';
+import { aiAnswerRepository } from '../repositories/aiAnswerRepository';
+import { CustomError } from '../middleware/errorHandler';
 import { currentUser } from '../middleware/auth';
 
 const router = Router();
@@ -30,8 +33,10 @@ const STATUSES: AnswerStatus[] = ['pending', 'approved', 'rejected'];
  * GET /api/admin/queue[?status=pending]
  * List captured remote answers with queue counts.
  */
-router.get('/queue', requireAdmin, (req: Request, res: Response) => {
+router.get('/queue', requireAdmin, paging(), validate, (req: Request, res: Response) => {
   const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+  if (Object.keys(req.query).some(key => !['status', 'limit', 'offset'].includes(key))) throw new CustomError('Unsupported queue query field.', 400);
+  const page = pageOf(req);
 
   if (status && !STATUSES.includes(status as AnswerStatus)) {
     res.status(400).json({
@@ -43,7 +48,8 @@ router.get('/queue', requireAdmin, (req: Request, res: Response) => {
 
   res.json({
     stats: answerCache.stats(),
-    records: answerCache.list(status as AnswerStatus | undefined),
+    records: answerCache.list(status as AnswerStatus | undefined, page.limit, page.offset),
+    pagination: { ...page, total: status ? answerCache.stats()[status as AnswerStatus] : answerCache.stats().total },
   });
 });
 
@@ -52,6 +58,8 @@ router.get('/queue', requireAdmin, (req: Request, res: Response) => {
  * Make a captured answer permanent (it stops expiring and is served to everyone).
  */
 router.post('/queue/:id/approve', requireAdmin, (req: Request, res: Response) => {
+  const existing = aiAnswerRepository().findById(String(req.params.id));
+  if (existing?.safety === 'unknown' || existing?.status === 'cached') throw new CustomError('Unknown cached verdicts cannot be approved.', 409);
   const record = answerCache.approve(String(req.params.id));
 
   if (!record) {
