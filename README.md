@@ -316,3 +316,11 @@ the **Pet Poison Helpline (855) 764-7661** / **ASPCA Poison Control (888) 426-44
 ## API expansion
 
 See the [200 further API improvements](docs/API-200-IMPROVEMENTS.md) and [API expansion guide](docs/API-200-GUIDE.md) for bounded datasets, cursors, bulk curated checks, comparison, conditional responses, and cache/moderation operations. Dataset clients should read the pagination and search compatibility notes before updating.
+
+## Source-backed updates
+
+`GET /api/recalls?q=brand&limit=20&offset=0` searches a dated, partial US FDA animal/veterinary listing. Read each linked notice for affected lots and instructions; no match is not a safety clearance. Refresh with `npm run sync:recalls --workspace @petpal/backend` and restart the API.
+
+Food-check `details.evidence` and dataset `fields=evidence,aliases` expose BioVet source verdicts, publisher groups, retrieval dates, pinned revisions, references and CC BY 4.0 attribution. The web result card has expandable evidence receipts. Publisher review claims have not been independently verified by PetPal; local storage alone does not establish veterinary review.
+
+See [source ingestion plan](docs/SOURCE-INGESTION-PLAN.md) for source rights, implemented work and remaining features.

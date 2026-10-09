@@ -7,6 +7,8 @@ export type AnswerSource = 'database' | 'external' | 'ai' | 'none';
 export type Severity = 'low' | 'medium' | 'high';
 
 export interface FoodItem {
+  aliases?: string[];
+  evidence?: { publisher: string; sourceUrl: string; itemId: string; sourceVerdict: string; assessedGroup: string; reviewStatus: 'publisher-reported'; upstreamRevision: string; retrievedAt: string; license: string; attribution: string; references: string[] }[];
   food: string;
   safety: SafetyLevel;
   description: string;

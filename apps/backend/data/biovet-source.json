@@ -1,0 +1,9 @@
+{
+  "sourceUrl": "https://raw.githubusercontent.com/Bio-Vet/pet-food-safety/5cee4b35844d253d53b58683d10648e90833cee8/data/items.json",
+  "upstreamRevision": "5cee4b35844d253d53b58683d10648e90833cee8",
+  "retrievedAt": "2026-10-09T16:39:46.035523+00:00",
+  "contentHash": "4a07f65f1956988eb820e74c65d2b0ee65c71c0d113841445ee02f8ed2cbfb73",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Data: BioVet veterinary clinic network, bio.vet",
+  "changes": "English names and notes; source groups mapped to PetPal species; danger mapped to unsafe; source verdict receipts retained; no inferred severity."
+}

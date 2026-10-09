@@ -5,7 +5,7 @@ import { CustomError } from '../../middleware/errorHandler';
 import { normalizeFoodKey, normalizePetKey, SAFETY_RANK } from '../../utils/normalization';
 import { objectInput, textInput } from './input';
 
-export const DATASET_FIELDS = ['food', 'pet', 'safety', 'description', 'symptoms', 'benefits', 'severity', 'alternatives', 'preparation', 'recommendation', 'caution', 'source', 'brand', 'product_name', 'barcode', 'image_url', 'ingredients'] as const;
+export const DATASET_FIELDS = ['food', 'pet', 'safety', 'description', 'symptoms', 'benefits', 'severity', 'alternatives', 'preparation', 'recommendation', 'caution', 'source', 'brand', 'product_name', 'barcode', 'image_url', 'ingredients', 'aliases', 'evidence'] as const;
 export const DATASET_OPTIONS = ['pet', 'safety', 'severity', 'source', 'q', 'match', 'sort', 'order', 'fields', 'has', 'limit', 'offset', 'cursor'] as const;
 function scalar(value: unknown, field: string): string | undefined {
   if (value === undefined) return undefined;

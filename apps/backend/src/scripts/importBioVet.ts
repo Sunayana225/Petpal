@@ -18,6 +18,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
+import { writeJsonFile } from '../utils/dataFiles';
 
 type Verdict = 'safe' | 'caution' | 'unsafe';
 
@@ -50,21 +51,17 @@ const VERDICT_MAP: Record<string, Verdict> = {
   danger: 'unsafe',
 };
 
-function main(): void {
-  const inputPath = path.join(__dirname, '../../data/biovet-items.json');
-  const { items } = JSON.parse(fs.readFileSync(inputPath, 'utf8')) as { items: BioVetItem[] };
+export function importBioVet(items: BioVetItem[], retrievedAt: string, upstreamRevision: string): Record<string, { safe: unknown[]; caution: unknown[]; unsafe: unknown[] }> {
 
   const out: Record<string, { safe: unknown[]; caution: unknown[]; unsafe: unknown[] }> = {};
   for (const species of SPECIES) out[species] = { safe: [], caution: [], unsafe: [] };
-
-  let count = 0;
 
   for (const item of items) {
     const name = item.names?.en?.[0];
     if (!name) continue;
 
     const description =
-      item.notes?.en ?? `${name} — safety assessed by BioVet veterinarians.`;
+      item.notes?.en ?? `${name} — BioVet publisher verdict; consult the original references.`;
 
     for (const [key, rawVerdict] of Object.entries(item.verdicts ?? {})) {
       const verdict = VERDICT_MAP[rawVerdict];
@@ -77,21 +74,25 @@ function main(): void {
           safety: verdict,
           description,
           source: 'BioVet (CC BY 4.0)',
+          aliases: (item.names.en ?? []).slice(1),
+          evidence: [{ publisher: 'BioVet', sourceUrl: 'https://github.com/Bio-Vet/pet-food-safety', itemId: item.id, sourceVerdict: verdict, assessedGroup: key, reviewStatus: 'publisher-reported', upstreamRevision, retrievedAt, license: 'https://creativecommons.org/licenses/by/4.0/', attribution: 'Data: BioVet veterinary clinic network, bio.vet', references: (item.sources ?? []).filter(url => /^https:\/\//.test(url)) }],
         };
         if (item.toxin) record.caution = item.toxin;
-        if (verdict === 'unsafe') record.severity = 'high';
 
         out[target][verdict].push(record);
-        count += 1;
       }
     }
   }
 
-  const outputPath = path.join(__dirname, '../../data/foodSafety.biovet.json');
-  fs.writeFileSync(outputPath, JSON.stringify(out, null, 2));
-
-  console.log(`Imported ${count} BioVet records from ${items.length} items → ${outputPath}`);
-  console.log('Attribution required: "Data: BioVet veterinary clinic network, bio.vet" (CC BY 4.0).');
+  return out;
 }
 
-main();
+function main(): void {
+  const inputPath = path.join(__dirname, '../../data/biovet-items.json');
+  const { items } = JSON.parse(fs.readFileSync(inputPath, 'utf8')) as { items: BioVetItem[] };
+  const provenance = JSON.parse(fs.readFileSync(path.join(__dirname, '../../data/biovet-source.json'), 'utf8')) as { retrievedAt: string; upstreamRevision: string };
+  if (!Array.isArray(items) || !/^[a-f0-9]{40}$/.test(provenance.upstreamRevision) || Number.isNaN(Date.parse(provenance.retrievedAt))) throw new Error('Invalid BioVet input provenance');
+  writeJsonFile(path.join(__dirname, '../../data/foodSafety.biovet.json'), importBioVet(items, provenance.retrievedAt, provenance.upstreamRevision));
+  console.log(`Imported ${items.length} BioVet items with publisher-reported review receipts.`);
+}
+if (require.main === module) main();

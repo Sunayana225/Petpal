@@ -22,6 +22,8 @@ export type Severity = 'low' | 'medium' | 'high';
 export type AnswerSource = 'database' | 'external' | 'ai' | 'none';
 
 export interface FoodItem {
+  aliases?: string[];
+  evidence?: EvidenceReceipt[];
   food: string;
   safety: SafetyLevel;
   description: string;
@@ -40,6 +42,21 @@ export interface FoodItem {
   barcode?: string;
   image_url?: string;
   ingredients?: string[];
+}
+
+/** Each receipt describes its source verdict, not the merged PetPal verdict. */
+export interface EvidenceReceipt {
+  publisher: string;
+  sourceUrl: string;
+  itemId: string;
+  sourceVerdict: SafetyCategory;
+  assessedGroup: string;
+  reviewStatus: 'publisher-reported';
+  upstreamRevision: string;
+  retrievedAt: string;
+  license: string;
+  attribution: string;
+  references: string[];
 }
 
 export interface FoodSafetyResult {

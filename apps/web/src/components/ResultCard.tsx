@@ -4,7 +4,7 @@ import type { FoodSafetyResult, SafetyLevel } from '../domain/types';
 import SafetyBadge from './SafetyBadge';
 
 const SOURCE_LABELS: Record<string, string> = {
-  database: 'Veterinary database',
+  database: 'Local dataset',
   external: 'Open Pet Food Facts',
   ai: 'AI analysis',
   none: 'No data',
@@ -110,6 +110,22 @@ export default function ResultCard({ result }: { result: FoodSafetyResult }) {
             <span className="mt-2 block">{details.recommendation}</span>
           </p>
         </Reveal>
+      )}
+
+      {!!details?.evidence?.length && (
+        <details className="mt-8 border-t border-slate pt-5 text-sm text-stone">
+          <summary className="cursor-pointer">Source evidence ({details.evidence.length})</summary>
+          <p className="mt-3">These receipts describe each publisher’s verdict. PetPal may combine sources into a more cautious result. Publisher review claims have not been independently verified.</p>
+          {details.evidence.map((receipt, index) => (
+            <div className="mt-4" key={`${receipt.itemId}-${receipt.assessedGroup}-${index}`}>
+              <a className="underline" href={receipt.sourceUrl} target="_blank" rel="noopener noreferrer">{receipt.publisher}</a>
+              <p>Source verdict: {receipt.sourceVerdict} · Assessed group: {receipt.assessedGroup}</p>
+              <p>Retrieved: {receipt.retrievedAt.slice(0, 10)} · Review: publisher-reported</p>
+              <p>{receipt.attribution} · <a className="underline" href={receipt.license} target="_blank" rel="noopener noreferrer">License</a></p>
+              {receipt.references.filter(url => url.startsWith('https://')).map(url => <a className="mr-3 underline" key={url} href={url} target="_blank" rel="noopener noreferrer">Original reference</a>)}
+            </div>
+          ))}
+        </details>
       )}
 
       <footer className="mt-12 flex flex-wrap gap-x-8 gap-y-2 border-t border-slate pt-5 text-[10px] uppercase tracking-wide-cap text-mist">

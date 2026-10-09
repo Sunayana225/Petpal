@@ -260,6 +260,9 @@ export class FoodSafetyRepository {
         ? { ...existing, ...incoming } // incoming verdict wins, inherits extra detail
         : { ...incoming, ...existing }; // existing verdict wins, inherits extra detail
 
+    merged.evidence = [...new Map([...(existing.evidence ?? []), ...(incoming.evidence ?? [])].map(receipt => [JSON.stringify(receipt), receipt])).values()];
+    merged.aliases = [...new Set([...(existing.aliases ?? []), ...(incoming.aliases ?? [])])];
+
     bucket.set(foodKey, merged);
   }
 
@@ -268,7 +271,7 @@ export class FoodSafetyRepository {
 
     for (const [pet, bucket] of this.index) {
       for (const [foodKey, record] of bucket) {
-        for (const variant of foodVariants(foodKey)) {
+        for (const variant of [foodKey, ...(record.aliases ?? [])].flatMap(alias => foodVariants(normalizeFoodKey(alias)))) {
           let byPet = this.lookup.get(variant);
           if (!byPet) {
             byPet = new Map();
