@@ -1,5 +1,7 @@
 # Deploy PetPal: Vercel web + Docker API
 
+For a full server walkthrough with DNS, Docker installation, Caddy HTTPS, OAuth, backups and troubleshooting, see [Docker API server setup](DOCKER-API-SERVER-SETUP.md).
+
 The web client deploys to Vercel. The API is a long-running Docker service with a persistent local SQLite volume. [Vercel does not support this local SQLite persistence model](https://vercel.com/kb/guide/is-sqlite-supported-in-vercel). This package does not create a hosting account, purchase a plan, register domains or configure OAuth applications.
 
 ## 1. Configure the API
