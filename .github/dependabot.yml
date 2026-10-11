@@ -8,6 +8,13 @@ updates:
     groups:
       patch-and-minor:
         update-types: [patch, minor]
+      # Majors here share peer ranges, so they only resolve when bumped together.
+      eslint:
+        patterns: ["eslint", "@eslint/*", "typescript-eslint"]
+    ignore:
+      # TypeScript 7 is blocked by ts-jest, whose peer range is >=4.3 <7.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule:
