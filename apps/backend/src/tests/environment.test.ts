@@ -8,7 +8,8 @@ test.each(['2.5', '-1', '100junk', 'Infinity'])('numeric settings reject %s', (v
 test('production requires strong secrets and HTTPS callback configuration', () => {
   const before = { ...process.env };
   try {
-    Object.assign(process.env, { NODE_ENV: 'production', SESSION_SECRET: 'short' });
+    // AI_CACHE_SERVE_UNREVIEWED is pinned so a local .env.test cannot trip the earlier production guard.
+    Object.assign(process.env, { NODE_ENV: 'production', SESSION_SECRET: 'short', AI_CACHE_SERVE_UNREVIEWED: 'false' });
     expect(() => validateEnvironment()).toThrow(/32/);
     process.env.SESSION_SECRET = 'x'.repeat(32);
     process.env.DB_PATH = '/tmp/petpal-test.db';
